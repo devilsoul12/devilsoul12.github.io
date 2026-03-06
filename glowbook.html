@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GlowBook 💅</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <style>
     :root {
@@ -19,352 +19,63 @@
       --green: #6bcb77;
       --red: #ff4d4d;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh;
-    }
-
-    /* Header */
-    header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      z-index: 100;
-    }
-
-    .logo {
-      font-family: 'Syne', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--text);
-    }
-
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg); }
+    .logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
     .logo span { color: var(--accent); }
-
-    .today-badge {
-      font-size: 12px;
-      color: var(--muted);
-      background: var(--surface);
-      padding: 6px 12px;
-      border-radius: 100px;
-      border: 1px solid var(--border);
-    }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg);
-      overflow-x: auto;
-    }
-
-    .tab {
-      padding: 14px 20px;
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-
-    .tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    /* Content */
-    .content {
-      padding: 24px;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
+    .today-badge { font-size: 12px; color: var(--muted); background: var(--surface); padding: 6px 12px; border-radius: 100px; border: 1px solid var(--border); }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab { padding: 16px 20px; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.2s; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .content { padding: 24px; max-width: 600px; margin: 0 auto; }
     .page { display: none; }
     .page.active { display: block; }
-
-    /* Stats row */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 12px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-family: 'Syne', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--accent);
-      margin-bottom: 4px;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.05em;
-    }
-
-    /* Section title */
-    .section-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* Form */
-    .form-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 12px; text-align: center; }
+    .stat-value { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+    .stat-label { font-size: 11px; color: var(--muted); }
+    .section-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full { grid-column: span 2; }
-
-    label {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    input, select {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      color: var(--text);
-      font-size: 14px;
-      font-family: 'DM Sans', sans-serif;
-      outline: none;
-      transition: border 0.2s;
-      width: 100%;
-    }
-
+    label { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    input, select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none; width: 100%; }
     input:focus, select:focus { border-color: var(--accent); }
     input::placeholder { color: var(--muted); }
-
     select option { background: var(--surface2); }
-
-    .btn {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      font-weight: 400;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-
-    .btn-primary:hover { opacity: 0.9; }
-    .btn-primary:active { transform: scale(0.98); }
-
-    /* Booking cards */
-    .booking-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .booking-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      transition: all 0.2s;
-      animation: fadeUp 0.3s ease;
-    }
-
-    .booking-card.today { border-color: var(--accent); }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+    .booking-list { display: flex; flex-direction: column; gap: 10px; }
+    .booking-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .booking-card.today-card { border-color: var(--accent); }
     .booking-card.completed { opacity: 0.4; }
-
-    .booking-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 10px;
-    }
-
-    .client-name {
-      font-family: 'Syne', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .service-tag {
-      background: var(--surface2);
-      color: var(--accent);
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 100px;
-      border: 1px solid var(--border);
-    }
-
-    .booking-details {
-      display: flex;
-      gap: 16px;
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
-    .payment-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 10px 12px;
-    }
-
+    .booking-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .client-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+    .service-tag { background: var(--surface2); color: var(--accent); font-size: 11px; padding: 4px 10px; border-radius: 100px; border: 1px solid var(--border); }
+    .booking-details { display: flex; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 12px; flex-wrap: wrap; }
+    .payment-row { display: flex; justify-content: space-between; align-items: center; background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
     .payment-info { font-size: 13px; }
-    .payment-info span { color: var(--text); font-weight: 400; }
-
-    .remaining {
-      font-size: 13px;
-      font-weight: 400;
-      padding: 4px 10px;
-      border-radius: 100px;
-    }
-
+    .payment-info span { color: var(--text); }
+    .remaining { font-size: 13px; padding: 4px 10px; border-radius: 100px; }
     .remaining.paid { background: rgba(107,203,119,0.15); color: var(--green); }
     .remaining.partial { background: rgba(255,217,61,0.15); color: var(--accent2); }
     .remaining.unpaid { background: rgba(255,77,77,0.15); color: var(--red); }
-
-    .booking-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .btn-small {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 12px;
-      cursor: pointer;
-      font-family: 'DM Sans', sans-serif;
-      transition: all 0.2s;
-    }
-
-    .btn-small:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-small.danger:hover { border-color: var(--red); color: var(--red); }
-    .btn-small.success:hover { border-color: var(--green); color: var(--green); }
-
-    .today-label {
-      font-size: 11px;
-      color: var(--accent);
-      font-weight: 400;
-      margin-bottom: 4px;
-    }
-
-    /* Empty state */
-    .empty {
-      text-align: center;
-      color: var(--muted);
-      padding: 40px 20px;
-      font-size: 14px;
-    }
-
-    /* Chart */
-    .chart-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-
-    .chart-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      color: var(--text);
-    }
-
-    /* Payment page */
-    .payment-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      animation: fadeUp 0.3s ease;
-    }
-
+    .booking-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-small { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .today-label { font-size: 11px; color: var(--accent); margin-bottom: 6px; }
+    .empty { text-align: center; color: var(--muted); padding: 32px 20px; font-size: 14px; }
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+    .chart-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+    .payment-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     .payment-client { font-weight: 400; margin-bottom: 4px; }
     .payment-date { font-size: 12px; color: var(--muted); }
     .payment-amount { text-align: right; }
     .amount-total { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
-    .amount-remaining { font-size: 12px; margin-top: 2px; }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .amount-remaining { font-size: 12px; margin-top: 2px; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -374,307 +85,214 @@
   <div class="today-badge" id="todayBadge"></div>
 </header>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('dashboard')">🏠 Dashboard</div>
-  <div class="tab" onclick="switchTab('bookings')">📅 Bookings</div>
-  <div class="tab" onclick="switchTab('payments')">💰 Payments</div>
-  <div class="tab" onclick="switchTab('analytics')">📊 Analytics</div>
+<div class="tabs" id="tabBar">
+  <div class="tab active" data-tab="dashboard">🏠 Dashboard</div>
+  <div class="tab" data-tab="bookings">📅 Bookings</div>
+  <div class="tab" data-tab="payments">💰 Payments</div>
+  <div class="tab" data-tab="analytics">📊 Analytics</div>
 </div>
 
 <div class="content">
 
-  <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-value" id="stat-today">0</div>
-        <div class="stat-label">Today</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-month">₹0</div>
-        <div class="stat-label">This Month</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-pending">₹0</div>
-        <div class="stat-label">Pending</div>
-      </div>
+      <div class="stat-card"><div class="stat-value" id="stat-today">0</div><div class="stat-label">Today</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-month">₹0</div><div class="stat-label">This Month</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-pending">₹0</div><div class="stat-label">Pending</div></div>
     </div>
-
     <div class="section-title">Today's Appointments</div>
     <div class="booking-list" id="today-list"></div>
-
     <br>
     <div class="section-title">Upcoming</div>
     <div class="booking-list" id="upcoming-list"></div>
   </div>
 
-  <!-- BOOKINGS -->
   <div class="page" id="page-bookings">
     <div class="form-card">
       <div class="section-title">New Booking</div>
       <div class="form-grid">
-        <div class="form-group full">
-          <label>Client Name</label>
-          <input type="text" id="clientName" placeholder="e.g. Priya Sharma" />
-        </div>
-        <div class="form-group">
-          <label>Service</label>
+        <div class="form-group full"><label>Client Name</label><input type="text" id="clientName" placeholder="e.g. Priya Sharma" /></div>
+        <div class="form-group"><label>Service</label>
           <select id="service">
-            <option>Haircut</option>
-            <option>Facial</option>
-            <option>Waxing</option>
-            <option>Threading</option>
-            <option>Bridal Makeup</option>
-            <option>Party Makeup</option>
-            <option>Hair Color</option>
-            <option>Manicure</option>
-            <option>Pedicure</option>
-            <option>Other</option>
+            <option>Haircut</option><option>Facial</option><option>Waxing</option>
+            <option>Threading</option><option>Bridal Makeup</option><option>Party Makeup</option>
+            <option>Hair Color</option><option>Manicure</option><option>Pedicure</option><option>Other</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" id="bookingDate" />
-        </div>
-        <div class="form-group">
-          <label>Time</label>
-          <input type="time" id="bookingTime" />
-        </div>
-        <div class="form-group">
-          <label>Total Price (₹)</label>
-          <input type="number" id="totalPrice" placeholder="e.g. 500" />
-        </div>
-        <div class="form-group">
-          <label>Advance Paid (₹)</label>
-          <input type="number" id="advancePaid" placeholder="e.g. 200" />
-        </div>
-        <div class="form-group full">
-          <label>Notes (optional)</label>
-          <input type="text" id="notes" placeholder="Any special requests..." />
-        </div>
+        <div class="form-group"><label>Date</label><input type="date" id="bookingDate" /></div>
+        <div class="form-group"><label>Time</label><input type="time" id="bookingTime" /></div>
+        <div class="form-group"><label>Total Price (₹)</label><input type="number" id="totalPrice" placeholder="500" /></div>
+        <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="advancePaid" placeholder="200" /></div>
+        <div class="form-group full"><label>Notes</label><input type="text" id="notes" placeholder="Special requests..." /></div>
       </div>
-      <button class="btn btn-primary" onclick="addBooking()">+ Add Booking</button>
+      <button class="btn btn-primary" id="addBtn">+ Add Booking</button>
     </div>
-
     <div class="section-title">All Bookings</div>
     <div class="booking-list" id="all-bookings-list"></div>
   </div>
 
-  <!-- PAYMENTS -->
   <div class="page" id="page-payments">
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-value" id="pay-collected">₹0</div>
-        <div class="stat-label">Collected</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="pay-pending">₹0</div>
-        <div class="stat-label">Pending</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="pay-total">₹0</div>
-        <div class="stat-label">Total</div>
-      </div>
+      <div class="stat-card"><div class="stat-value" id="pay-collected">₹0</div><div class="stat-label">Collected</div></div>
+      <div class="stat-card"><div class="stat-value" id="pay-pending">₹0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-value" id="pay-total">₹0</div><div class="stat-label">Total</div></div>
     </div>
-
     <div class="section-title">Pending Payments</div>
     <div id="pending-payments-list"></div>
-
     <div class="section-title">Fully Paid</div>
     <div id="paid-payments-list"></div>
   </div>
 
-  <!-- ANALYTICS -->
   <div class="page" id="page-analytics">
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-value" id="ana-total-clients">0</div>
-        <div class="stat-label">Total Clients</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="ana-total-earned">₹0</div>
-        <div class="stat-label">Total Earned</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="ana-this-month">0</div>
-        <div class="stat-label">This Month</div>
-      </div>
+      <div class="stat-card"><div class="stat-value" id="ana-total-clients">0</div><div class="stat-label">Total Clients</div></div>
+      <div class="stat-card"><div class="stat-value" id="ana-total-earned">₹0</div><div class="stat-label">Total Earned</div></div>
+      <div class="stat-card"><div class="stat-value" id="ana-this-month">0</div><div class="stat-label">This Month</div></div>
     </div>
-
-    <div class="chart-card">
-      <div class="chart-title">Monthly Bookings 📅</div>
-      <canvas id="bookingsChart"></canvas>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-title">Monthly Earnings 💰</div>
-      <canvas id="earningsChart"></canvas>
-    </div>
+    <div class="chart-card"><div class="chart-title">Monthly Bookings 📅</div><canvas id="bookingsChart"></canvas></div>
+    <div class="chart-card"><div class="chart-title">Monthly Earnings 💰</div><canvas id="earningsChart"></canvas></div>
   </div>
 
 </div>
 
 <script>
-  let bookings = JSON.parse(localStorage.getItem('glowbook') || '[]');
-  let bookingsChart, earningsChart;
+  var bookings = JSON.parse(localStorage.getItem('glowbook') || '[]');
+  var bChart, eChart;
 
-  // Set today's date as default
-  document.getElementById('bookingDate').valueAsDate = new Date();
+  // Set today date
+  var todayDate = new Date().toISOString().split('T')[0];
+  document.getElementById('bookingDate').value = todayDate;
+  document.getElementById('todayBadge').innerText = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
-  // Today badge
-  const today = new Date();
-  document.getElementById('todayBadge').innerText = today.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  // Tab clicks
+  document.getElementById('tabBar').addEventListener('click', function(e) {
+    var tab = e.target.closest('.tab');
+    if (!tab) return;
+    var name = tab.getAttribute('data-tab');
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    tab.classList.add('active');
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    document.getElementById('page-' + name).classList.add('active');
+    if (name === 'analytics') renderCharts();
+  });
 
-  function save() {
+  // Add booking
+  document.getElementById('addBtn').addEventListener('click', function() {
+    var name = document.getElementById('clientName').value.trim();
+    var service = document.getElementById('service').value;
+    var date = document.getElementById('bookingDate').value;
+    var time = document.getElementById('bookingTime').value;
+    var total = parseFloat(document.getElementById('totalPrice').value) || 0;
+    var advance = parseFloat(document.getElementById('advancePaid').value) || 0;
+    var notes = document.getElementById('notes').value.trim();
+
+    if (!name || !date) { alert('Please enter client name and date!'); return; }
+
+    bookings.push({ id: Date.now(), name: name, service: service, date: date, time: time, total: total, advance: advance, notes: notes, completed: false });
     localStorage.setItem('glowbook', JSON.stringify(bookings));
-  }
-
-  function todayStr() {
-    return new Date().toISOString().split('T')[0];
-  }
-
-  function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach((t, i) => {
-      t.classList.remove('active');
-    });
-    document.querySelectorAll('.tab').forEach(t => {
-      if (t.getAttribute('onclick').includes(tab)) t.classList.add('active');
-    });
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + tab).classList.add('active');
-    if (tab === 'analytics') renderCharts();
-  }
-
-  function addBooking() {
-    const name = document.getElementById('clientName').value.trim();
-    const service = document.getElementById('service').value;
-    const date = document.getElementById('bookingDate').value;
-    const time = document.getElementById('bookingTime').value;
-    const total = parseFloat(document.getElementById('totalPrice').value) || 0;
-    const advance = parseFloat(document.getElementById('advancePaid').value) || 0;
-    const notes = document.getElementById('notes').value.trim();
-
-    if (!name || !date) {
-      alert('Please enter client name and date!');
-      return;
-    }
-
-    bookings.push({
-      id: Date.now(),
-      name, service, date, time, total, advance, notes,
-      completed: false,
-      createdAt: new Date().toISOString()
-    });
-
-    save();
     renderAll();
 
-    // Clear form
     document.getElementById('clientName').value = '';
     document.getElementById('totalPrice').value = '';
     document.getElementById('advancePaid').value = '';
     document.getElementById('notes').value = '';
-    document.getElementById('bookingDate').valueAsDate = new Date();
-  }
-
-  function completeBooking(id) {
-    bookings = bookings.map(b => b.id === id ? { ...b, completed: true } : b);
-    save();
-    renderAll();
-  }
-
-  function deleteBooking(id) {
-    if (confirm('Delete this booking?')) {
-      bookings = bookings.filter(b => b.id !== id);
-      save();
-      renderAll();
-    }
-  }
+    document.getElementById('bookingDate').value = todayDate;
+  });
 
   function getRemaining(b) { return b.total - b.advance; }
 
-  function paymentStatus(b) {
-    const rem = getRemaining(b);
+  function payStatus(b) {
+    var rem = getRemaining(b);
     if (rem <= 0) return { label: '✓ Paid', cls: 'paid' };
-    if (b.advance > 0) return { label: `₹${rem} left`, cls: 'partial' };
-    return { label: `₹${rem} unpaid`, cls: 'unpaid' };
+    if (b.advance > 0) return { label: '₹' + rem + ' left', cls: 'partial' };
+    return { label: '₹' + rem + ' unpaid', cls: 'unpaid' };
   }
 
-  function bookingCard(b) {
-    const isToday = b.date === todayStr();
-    const status = paymentStatus(b);
-    return `
-      <div class="booking-card ${isToday ? 'today' : ''} ${b.completed ? 'completed' : ''}">
-        ${isToday ? '<div class="today-label">⚡ Today</div>' : ''}
-        <div class="booking-top">
-          <div class="client-name">${b.name}</div>
-          <div class="service-tag">${b.service}</div>
-        </div>
-        <div class="booking-details">
-          <span>📅 ${b.date}</span>
-          ${b.time ? `<span>🕐 ${b.time}</span>` : ''}
-          ${b.notes ? `<span>📝 ${b.notes}</span>` : ''}
-        </div>
-        <div class="payment-row">
-          <div class="payment-info">
-            Total: <span>₹${b.total}</span> &nbsp;|&nbsp; Advance: <span>₹${b.advance}</span>
-          </div>
-          <div class="remaining ${status.cls}">${status.label}</div>
-        </div>
-        ${!b.completed ? `
-        <div class="booking-actions">
-          <button class="btn-small success" onclick="completeBooking(${b.id})">✓ Done</button>
-          <button class="btn-small danger" onclick="deleteBooking(${b.id})">✕ Delete</button>
-        </div>` : '<div style="font-size:12px;color:var(--green);margin-top:8px">✓ Completed</div>'}
-      </div>
-    `;
+  function makeCard(b) {
+    var isToday = b.date === todayDate;
+    var st = payStatus(b);
+    var actions = b.completed
+      ? '<div style="font-size:12px;color:#6bcb77;margin-top:8px">✓ Completed</div>'
+      : '<div class="booking-actions"><button class="btn-small" onclick="completeB(' + b.id + ')">✓ Done</button><button class="btn-small" onclick="deleteB(' + b.id + ')">✕ Delete</button></div>';
+    return '<div class="booking-card ' + (isToday ? 'today-card' : '') + ' ' + (b.completed ? 'completed' : '') + '">'
+      + (isToday ? '<div class="today-label">⚡ Today</div>' : '')
+      + '<div class="booking-top"><div class="client-name">' + b.name + '</div><div class="service-tag">' + b.service + '</div></div>'
+      + '<div class="booking-details"><span>📅 ' + b.date + '</span>' + (b.time ? '<span>🕐 ' + b.time + '</span>' : '') + (b.notes ? '<span>📝 ' + b.notes + '</span>' : '') + '</div>'
+      + '<div class="payment-row"><div class="payment-info">Total: <span>₹' + b.total + '</span> | Advance: <span>₹' + b.advance + '</span></div><div class="remaining ' + st.cls + '">' + st.label + '</div></div>'
+      + actions + '</div>';
   }
+
+  window.completeB = function(id) {
+    bookings = bookings.map(function(b) { return b.id === id ? Object.assign({}, b, { completed: true }) : b; });
+    localStorage.setItem('glowbook', JSON.stringify(bookings));
+    renderAll();
+  };
+
+  window.deleteB = function(id) {
+    if (confirm('Delete this booking?')) {
+      bookings = bookings.filter(function(b) { return b.id !== id; });
+      localStorage.setItem('glowbook', JSON.stringify(bookings));
+      renderAll();
+    }
+  };
 
   function renderAll() {
-    const today = todayStr();
-    const upcoming = bookings.filter(b => !b.completed && b.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-    const todayBookings = bookings.filter(b => b.date === today && !b.completed);
-    const allSorted = [...bookings].sort((a, b) => b.date.localeCompare(a.date));
+    var today = todayDate;
+    var todayList = bookings.filter(function(b) { return b.date === today && !b.completed; });
+    var upcomingList = bookings.filter(function(b) { return b.date > today && !b.completed; }).sort(function(a,b) { return a.date.localeCompare(b.date); }).slice(0, 5);
+    var allSorted = bookings.slice().sort(function(a,b) { return b.date.localeCompare(a.date); });
 
-    // Dashboard
-    document.getElementById('stat-today').innerText = todayBookings.length;
-    const monthEarned = bookings.filter(b => b.date.startsWith(today.slice(0, 7))).reduce((s, b) => s + b.advance, 0);
+    document.getElementById('stat-today').innerText = todayList.length;
+    var monthKey = today.slice(0, 7);
+    var monthEarned = bookings.filter(function(b) { return b.date.startsWith(monthKey); }).reduce(function(s,b) { return s + b.advance; }, 0);
     document.getElementById('stat-month').innerText = '₹' + monthEarned;
-    const totalPending = bookings.filter(b => !b.completed).reduce((s, b) => s + getRemaining(b), 0);
+    var totalPending = bookings.filter(function(b) { return !b.completed; }).reduce(function(s,b) { return s + getRemaining(b); }, 0);
     document.getElementById('stat-pending').innerText = '₹' + totalPending;
 
-    // Today list
-    const tl = document.getElementById('today-list');
-    tl.innerHTML = todayBookings.length ? todayBookings.map(bookingCard).join('') : '<div class="empty">No appointments today 🌸</div>';
+    document.getElementById('today-list').innerHTML = todayList.length ? todayList.map(makeCard).join('') : '<div class="empty">No appointments today 🌸</div>';
+    document.getElementById('upcoming-list').innerHTML = upcomingList.length ? upcomingList.map(makeCard).join('') : '<div class="empty">No upcoming bookings 📅</div>';
+    document.getElementById('all-bookings-list').innerHTML = allSorted.length ? allSorted.map(makeCard).join('') : '<div class="empty">No bookings yet! Add your first one ✨</div>';
 
-    // Upcoming list
-    const ul = document.getElementById('upcoming-list');
-    const upcomingFuture = upcoming.filter(b => b.date > today).slice(0, 5);
-    ul.innerHTML = upcomingFuture.length ? upcomingFuture.map(bookingCard).join('') : '<div class="empty">No upcoming bookings 📅</div>';
-
-    // All bookings
-    const al = document.getElementById('all-bookings-list');
-    al.innerHTML = allSorted.length ? allSorted.map(bookingCard).join('') : '<div class="empty">No bookings yet! Add your first one above ✨</div>';
-
-    // Payments
-    const collected = bookings.reduce((s, b) => s + b.advance, 0);
-    const pending = bookings.filter(b => !b.completed).reduce((s, b) => s + getRemaining(b), 0);
-    const total = bookings.reduce((s, b) => s + b.total, 0);
+    var collected = bookings.reduce(function(s,b) { return s + b.advance; }, 0);
+    var pending = bookings.filter(function(b) { return !b.completed; }).reduce(function(s,b) { return s + getRemaining(b); }, 0);
+    var total = bookings.reduce(function(s,b) { return s + b.total; }, 0);
     document.getElementById('pay-collected').innerText = '₹' + collected;
     document.getElementById('pay-pending').innerText = '₹' + pending;
     document.getElementById('pay-total').innerText = '₹' + total;
 
-    const pendingList = bookings.filter(b => getRemaining(b) > 0 && !b.completed);
-    const paidList = bookings.filter(b => getRemaining(b) <= 0);
+    var pendingList = bookings.filter(function(b) { return getRemaining(b) > 0 && !b.completed; });
+    var paidList = bookings.filter(function(b) { return getRemaining(b) <= 0; });
 
-    document.getElementById('pending-payments-list').innerHTML = pendingList.length ?
-      pendingList.map(b => `
-        <div class="payment-item">
-          <div><div class="payment-client">${b.name}</div><div class="payment-date">${b.service} · ${b.date}</div></div>
-          <div class="payment-amount">
-            <div class="amount-total" style="color:var(--accent2)">₹${getRemaining(b)}</div>
-            <div class="amount-remaining" style="color:var(--muted)">of ₹${b.total}</div>
-          </div>
-        </div>`).join('') : '<div class="empty">No pending payments 🎉</div>';
+    document.getElementById('pending-payments-list').innerHTML = pendingList.length
+      ? pendingList.map(function(b) { return '<div class="payment-item"><div><div class="payment-client">' + b.name + '</div><div class="payment-date">' + b.service + ' · ' + b.date + '</div></div><div class="payment-amount"><div class="amount-total" style="color:var(--accent2)">₹' + getRemaining(b) + '</div><div class="amount-remaining">of ₹' + b.total + '</div></div></div>'; }).join('')
+      : '<div class="empty">No pending payments 🎉</div>';
 
-    docu
+    document.getElementById('paid-payments-list').innerHTML = paidList.length
+      ? paidList.map(function(b) { return '<div class="payment-item"><div><div class="payment-client">' + b.name + '</div><div class="payment-date">' + b.service + ' · ' + b.date + '</div></div><div class="payment-amount"><div class="amount-total" style="color:#6bcb77">₹' + b.total + '</div><div class="amount-remaining">fully paid</div></div></div>'; }).join('')
+      : '<div class="empty">No completed payments yet</div>';
+
+    document.getElementById('ana-total-clients').innerText = bookings.length;
+    document.getElementById('ana-total-earned').innerText = '₹' + collected;
+    document.getElementById('ana-this-month').innerText = bookings.filter(function(b) { return b.date.startsWith(monthKey); }).length;
+  }
+
+  function renderCharts() {
+    var months = [], counts = [], earnings = [];
+    for (var i = 5; i >= 0; i--) {
+      var d = new Date(); d.setMonth(d.getMonth() - i);
+      var key = d.toISOString().slice(0, 7);
+      months.push(d.toLocaleDateString('en-IN', { month: 'short' }));
+      counts.push(bookings.filter(function(b) { return b.date.startsWith(key); }).length);
+      earnings.push(bookings.filter(function(b) { return b.date.startsWith(key); }).reduce(function(s,b) { return s + b.advance; }, 0));
+    }
+    var cfg = { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#555' }, grid: { color: '#1a1a1a' } }, y: { ticks: { color: '#555' }, grid: { color: '#1a1a1a' }, beginAtZero: true } } };
+    if (bChart) bChart.destroy();
+    if (eChart) eChart.destroy();
+    bChart = new Chart(document.getElementById('bookingsChart'), { type: 'bar', data: { labels: months, datasets: [{ data: counts, backgroundColor: '#ff6b9d', borderRadius: 6 }] }, options: cfg });
+    eChart = new Chart(document.getElementById('earningsChart'), { type: 'line', data: { labels: months, datasets: [{ data: earnings, borderColor: '#ffd93d', backgroundColor: 'rgba(255,217,61,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointBackgroundColor: '#ffd93d' }] }, options: cfg });
+  }
+
+  renderAll();
+</script>
+</body>
+</html>
