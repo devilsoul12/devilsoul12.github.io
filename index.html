@@ -321,6 +321,25 @@
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    #themeBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+body.light {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --surface2: #f0ede6;
+  --text: #1a1a1a;
+  --muted: #888;
+  --border: #e5e2db;
+}
   </style>
 </head>
 <body>
@@ -328,6 +347,7 @@
   <nav>
     <div class="nav-logo">Villen<span>.</span></div>
     <ul class="nav-links">
+      <button onclick="toggleTheme()" id="themeBtn">☀️ Light</button>
       <li><a href="#about">About</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
@@ -407,6 +427,18 @@
     <div class="footer-name">Villen<span>.</span></div>
     <div class="footer-note">Built with HTML & CSS ✦ Hosted on GitHub Pages</div>
   </footer>
-    
+
+  <script>
+  function toggleTheme() {
+    document.body.classList.toggle("light");
+    const btn = document.getElementById("themeBtn");
+    if (document.body.classList.contains("light")) {
+      btn.innerText = "🌙 Dark";
+    } else {
+      btn.innerText = "☀️ Light";
+    }
+  }
+  </script>
+  
 </body>
 </html>
