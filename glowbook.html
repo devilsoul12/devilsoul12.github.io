@@ -82,7 +82,11 @@
 
 <header>
   <div class="logo">Glow<span>Book</span> 💅</div>
-  <div class="today-badge" id="todayBadge"></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="today-badge" id="todayBadge"></div>
+    <button onclick="exportData()" style="background:#1e1e1e;border:1px solid #333;color:#ffd93d;padding:6px 12px;border-radius:100px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">⬇️ Backup</button>
+    <label style="background:#1e1e1e;border:1px solid #333;color:#6bcb77;padding:6px 12px;border-radius:100px;font-size:12px;cursor:pointer;">⬆️ Restore<input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"></label>
+  </div>
 </header>
 
 <div class="tabs" id="tabBar">
@@ -292,6 +296,39 @@
     eChart = new Chart(document.getElementById('earningsChart'), { type: 'line', data: { labels: months, datasets: [{ data: earnings, borderColor: '#ffd93d', backgroundColor: 'rgba(255,217,61,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointBackgroundColor: '#ffd93d' }] }, options: cfg });
   }
 
+  function exportData() {
+    var data = JSON.stringify(bookings, null, 2);
+    var blob = new Blob([data], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'glowbook-backup-' + todayDate + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          bookings = imported;
+          localStorage.setItem('glowbook', JSON.stringify(bookings));
+          renderAll();
+          alert('Data restored successfully! 🎉');
+        } else {
+          alert('Invalid backup file!');
+        }
+      } catch(err) {
+        alert('Could not read file. Please use a valid GlowBook backup!');
+      }
+    };
+    reader.readAsText(file);
+      }
+  
   renderAll();
 </script>
 </body>
