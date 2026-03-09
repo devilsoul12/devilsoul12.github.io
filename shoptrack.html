@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ShopTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f0e8;
+      --bg2: #ede7d9;
+      --surf: #ffffff;
+      --surf2: #faf8f4;
+      --acc: #1a6b3c;
+      --acc2: #2d9658;
+      --acc-soft: rgba(26,107,60,0.08);
+      --orange: #e85d04;
+      --orange-soft: rgba(232,93,4,0.08);
+      --red: #c0392b;
+      --red-soft: rgba(192,57,43,0.08);
+      --blue: #1a5276;
+      --blue-soft: rgba(26,82,118,0.08);
+      --gold: #b7791f;
+      --gold-soft: rgba(183,121,31,0.08);
+      --txt: #1a1a1a;
+      --txt2: #6b6355;
+      --txt3: #b0a898;
+      --bdr: rgba(0,0,0,0.07);
+      --bdr2: rgba(0,0,0,0.12);
+      --shadow: 0 2px 16px rgba(0,0,0,0.06);
+      --shadow2: 0 8px 32px rgba(0,0,0,0.1);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { background:var(--bg); color:var(--txt); font-family:'Plus Jakarta Sans',sans-serif; min-height:100vh; touch-action:manipulation; }
+
+    /* MODAL */
+    .modal-ov { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(6px); z-index:9999; display:none; align-items:flex-end; justify-content:center; padding:0; }
+    .modal-ov.show { display:flex; }
+    .modal { background:var(--surf); border-radius:24px 24px 0 0; padding:28px 20px 40px; width:100%; max-width:560px; animation:slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1); max-height:90vh; overflow-y:auto; }
+    @keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+    .modal-title { font-family:'Instrument Serif',serif; font-size:24px; margin-bottom:20px; color:var(--txt); }
+    .modal-close { float:right; background:var(--bg2); border:none; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer; color:var(--txt2); }
+
+    /* HEADER */
+    header { background:var(--surf); border-bottom:1px solid var(--bdr); padding:14px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; box-shadow:0 1px 8px rgba(0,0,0,0.04); }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo-icon { width:34px; height:34px; background:var(--acc); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .logo-text { font-family:'Instrument Serif',serif; font-size:20px; color:var(--txt); }
+    .logo-text span { color:var(--acc); }
+    .logo-sub { font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--txt3); }
+    .hbtn { background:var(--acc); color:#fff; border:none; padding:8px 14px; border-radius:10px; font-size:12px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; cursor:pointer; }
+
+    /* TABS */
+    .tabs { display:flex; background:var(--surf); border-bottom:1px solid var(--bdr); overflow-x:auto; scrollbar-width:none; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab { padding:13px 16px; font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--txt3); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:color 0.2s; }
+    .tab.on { color:var(--acc); border-bottom-color:var(--acc); }
+
+    /* PAGES */
+    .pg { display:none; padding:16px 16px 80px; max-width:560px; margin:0 auto; }
+    .pg.on { display:block; }
+
+    /* STAT CARDS */
+    .srow { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
+    .srow.s3 { grid-template-columns:repeat(3,1fr); }
+    .sc { background:var(--surf); border:1px solid var(--bdr); border-radius:16px; padding:14px 12px; box-shadow:var(--shadow); }
+    .sc-icon { font-size:20px; margin-bottom:6px; }
+    .sc-val { font-family:'Instrument Serif',serif; font-size:22px; color:var(--txt); line-height:1; margin-bottom:3px; }
+    .sc-lbl { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--txt3); font-weight:600; }
+
+    /* SECTION */
+    .sec { font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:var(--txt3); margin:20px 0 10px; display:flex; align-items:center; gap:10px; }
+    .sec::after { content:''; flex:1; height:1px; background:var(--bdr); }
+    .sec-btn { font-size:10px; color:var(--acc); font-weight:600; cursor:pointer; letter-spacing:0.04em; background:none; border:none; font-family:'Plus Jakarta Sans',sans-serif; }
+
+    /* PRODUCT CARD */
+    .pc { background:var(--surf); border:1px solid var(--bdr); border-radius:16px; padding:14px; margin-bottom:10px; box-shadow:var(--shadow); display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .pc.low { border-color:rgba(232,93,4,0.3); background:linear-gradient(135deg,#fff,#fff8f5); }
+    .pc.out { border-color:rgba(192,57,43,0.3); background:linear-gradient(135deg,#fff,#fff5f5); }
+    .pc-left { flex:1; min-width:0; }
+    .pc-name { font-weight:700; font-size:15px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .pc-meta { font-size:12px; color:var(--txt2); }
+    .pc-right { text-align:right; flex-shrink:0; }
+    .pc-stock { font-family:'Instrument Serif',serif; font-size:22px; line-height:1; }
+    .pc-unit { font-size:10px; color:var(--txt3); text-transform:uppercase; letter-spacing:0.08em; }
+    .pc-btns { display:flex; gap:6px; margin-top:10px; }
+    .pc-btn { flex:1; padding:8px 4px; border-radius:9px; border:1px solid var(--bdr2); background:transparent; font-size:11px; font-weight:600; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; color:var(--txt2); text-align:center; }
+    .pc-btn.sell { background:var(--acc-soft); color:var(--acc); border-color:rgba(26,107,60,0.2); }
+    .pc-btn.edit { background:var(--blue-soft); color:var(--blue); border-color:rgba(26,82,118,0.2); }
+    .pc-btn.del { background:var(--red-soft); color:var(--red); border-color:rgba(192,57,43,0.2); }
+
+    /* BADGE */
+    .badge { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; }
+    .badge.low { background:var(--orange-soft); color:var(--orange); }
+    .badge.out { background:var(--red-soft); color:var(--red); }
+    .badge.ok { background:var(--acc-soft); color:var(--acc); }
+
+    /* FORM */
+    .fg { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+    .fg label { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--txt3); font-weight:600; }
+    .fg input, .fg select { background:var(--bg2); border:1px solid var(--bdr); border-radius:10px; padding:12px 13px; color:var(--txt); font-size:15px; font-family:'Plus Jakarta Sans',sans-serif; outline:none; width:100%; }
+    .fg input:focus, .fg select:focus { border-color:var(--acc); background:var(--surf); }
+    .fg2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .btnp { width:100%; padding:14px; background:var(--acc); color:#fff; border:none; border-radius:12px; font-size:15px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; cursor:pointer; margin-top:4px; }
+    .btnp:active { opacity:0.85; }
+
+    /* SALE CARD */
+    .sale-card { background:var(--surf); border:1px solid var(--bdr); border-radius:14px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow); }
+    .sale-name { font-weight:600; font-size:14px; }
+    .sale-meta { font-size:12px; color:var(--txt2); margin-top:2px; }
+    .sale-amt { font-family:'Instrument Serif',serif; font-size:20px; color:var(--acc); }
+    .sale-time { font-size:10px; color:var(--txt3); text-align:right; margin-top:2px; }
+
+    /* ALERT BANNER */
+    .alert-banner { background:linear-gradient(135deg,#fff8f5,#fff); border:1px solid rgba(232,93,4,0.25); border-radius:14px; padding:12px 14px; margin-bottom:14px; display:none; }
+    .alert-banner.show { display:block; }
+    .ab-title { font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--orange); margin-bottom:6px; }
+    .ab-item { font-size:13px; color:var(--txt2); padding:3px 0; border-bottom:1px solid var(--bdr); }
+    .ab-item:last-child { border:none; }
+    .ab-item strong { color:var(--txt); }
+
+    .emp { text-align:center; color:var(--txt3); padding:32px 0; font-size:13px; }
+    .emp-icon { font-size:36px; display:block; margin-bottom:8px; }
+
+    /* QUICK SELL */
+    .qs-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:16px; }
+    .qs-item { background:var(--surf); border:1px solid var(--bdr); border-radius:14px; padding:12px; cursor:pointer; box-shadow:var(--shadow); transition:all 0.15s; }
+    .qs-item:active { transform:scale(0.97); }
+    .qs-item.out-item { opacity:0.4; pointer-events:none; }
+    .qs-name { font-weight:700; font-size:14px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .qs-price { font-size:13px; color:var(--acc); font-weight:600; }
+    .qs-stock { font-size:11px; color:var(--txt3); margin-top:2px; }
+  </style>
+</head>
+<body>
+
+<!-- ADD/EDIT PRODUCT MODAL -->
+<div class="modal-ov" id="prodModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('prodModal')">✕</button>
+    <div class="modal-title" id="prodModalTitle">Add Product</div>
+    <input type="hidden" id="editId">
+    <div class="fg"><label>Product Name</label><input id="pName" type="text" placeholder="e.g. Tata Salt 1kg"/></div>
+    <div class="fg2">
+      <div class="fg"><label>Buying Price (₹)</label><input id="pBuy" type="number" placeholder="18"/></div>
+      <div class="fg"><label>Selling Price (₹)</label><input id="pSell" type="number" placeholder="22"/></div>
+    </div>
+    <div class="fg2">
+      <div class="fg"><label>Current Stock</label><input id="pStock" type="number" placeholder="50"/></div>
+      <div class="fg"><label>Low Stock Alert</label><input id="pMin" type="number" placeholder="10"/></div>
+    </div>
+    <div class="fg"><label>Unit</label>
+      <select id="pUnit">
+        <option>piece</option><option>kg</option><option>g</option><option>litre</option><option>ml</option><option>dozen</option><option>packet</option><option>box</option>
+      </select>
+    </div>
+    <button class="btnp" onclick="saveProduct()">Save Product</button>
+  </div>
+</div>
+
+<!-- SELL MODAL -->
+<div class="modal-ov" id="sellModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('sellModal')">✕</button>
+    <div class="modal-title" id="sellModalTitle">Record Sale</div>
+    <input type="hidden" id="sellId">
+    <div class="fg"><label>Quantity Sold</label><input id="sellQty" type="number" placeholder="1" min="1"/></div>
+    <div id="sellInfo" style="background:var(--bg2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--txt2);"></div>
+    <button class="btnp" onclick="confirmSell()">✓ Confirm Sale</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏪</div>
+    <div>
+      <div class="logo-text">Shop<span>Track</span></div>
+      <div class="logo-sub">Inventory Manager</div>
+    </div>
+  </div>
+  <button class="hbtn" onclick="openAddProduct()">+ Add Product</button>
+</header>
+
+<div class="tabs">
+  <div class="tab on" onclick="showTab('dashboard',this)">Dashboard</div>
+  <div class="tab" onclick="showTab('inventory',this)">Inventory</div>
+  <div class="tab" onclick="showTab('sell',this)">Quick Sell</div>
+  <div class="tab" onclick="showTab('sales',this)">Sales</div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="pg on" id="pg-dashboard">
+  <div class="srow" style="margin-top:4px;">
+    <div class="sc"><div class="sc-icon">📦</div><div class="sc-val" id="d1">0</div><div class="sc-lbl">Products</div></div>
+    <div class="sc"><div class="sc-icon">💰</div><div class="sc-val" id="d2">₹0</div><div class="sc-lbl">Today's Sales</div></div>
+  </div>
+  <div class="srow s3">
+    <div class="sc"><div class="sc-icon">📈</div><div class="sc-val" id="d3">₹0</div><div class="sc-lbl">Today's Profit</div></div>
+    <div class="sc"><div class="sc-icon">⚠️</div><div class="sc-val" id="d4" style="color:var(--orange)">0</div><div class="sc-lbl">Low Stock</div></div>
+    <div class="sc"><div class="sc-icon">❌</div><div class="sc-val" id="d5" style="color:var(--red)">0</div><div class="sc-lbl">Out of Stock</div></div>
+  </div>
+  <div class="alert-banner" id="alertBanner">
+    <div class="ab-title">⚠️ Low Stock Alert</div>
+    <div id="alertList"></div>
+  </div>
+  <div class="sec">Today's Sales</div>
+  <div id="d-sales"></div>
+  <div class="sec">Top Products</div>
+  <div id="d-top"></div>
+</div>
+
+<!-- INVENTORY -->
+<div class="pg" id="pg-inventory">
+  <div style="margin:4px 0 14px;display:flex;gap:8px;">
+    <input id="searchInp" type="text" placeholder="🔍 Search products..." oninput="renderInventory()" style="flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:10px 13px;font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;color:var(--txt);">
+    <select id="filterSel" onchange="renderInventory()" style="background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:10px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--txt2);outline:none;">
+      <option value="all">All</option>
+      <option value="low">Low Stock</option>
+      <option value="out">Out of Stock</option>
+    </select>
+  </div>
+  <div id="inv-list"></div>
+</div>
+
+<!-- QUICK SELL -->
+<div class="pg" id="pg-sell">
+  <div class="sec" style="margin-top:4px;">Tap to sell</div>
+  <div class="qs-grid" id="qs-grid"></div>
+</div>
+
+<!-- SALES HISTORY -->
+<div class="pg" id="pg-sales">
+  <div class="srow" style="margin-top:4px;">
+    <div class="sc"><div class="sc-icon">🧾</div><div class="sc-val" id="s-total">₹0</div><div class="sc-lbl">Total Revenue</div></div>
+    <div class="sc"><div class="sc-icon">📊</div><div class="sc-val" id="s-profit">₹0</div><div class="sc-lbl">Total Profit</div></div>
+  </div>
+  <div class="sec">All Sales</div>
+  <div id="sales-list"></div>
+</div>
+
+<script>
+var P = JSON.parse(localStorage.getItem('st_products')||'[]');
+var S = JSON.parse(localStorage.getItem('st_sales')||'[]');
+var TODAY = new Date().toISOString().split('T')[0];
+
+function saveAll(){ localStorage.setItem('st_products',JSON.stringify(P)); localStorage.setItem('st_sales',JSON.stringify(S)); }
+
+function showTab(name,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.getElementById('pg-'+name).classList.add('on');
+  renderAll();
+}
+
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function openAddProduct(){
+  document.getElementById('prodModalTitle').innerText = 'Add Product';
+  document.getElementById('editId').value = '';
+  document.getElementById('pName').value = '';
+  document.getElementById('pBuy').value = '';
+  document.getElementById('pSell').value = '';
+  document.getElementById('pStock').value = '';
+  document.getElementById('pMin').value = '10';
+  document.getElementById('pUnit').value = 'piece';
+  openModal('prodModal');
+}
+
+function openEditProduct(id){
+  var p = P.find(function(x){return x.id===id;});
+  if(!p) return;
+  document.getElementById('prodModalTitle').innerText = 'Edit Product';
+  document.getElementById('editId').value = id;
+  document.getElementById('pName').value = p.name;
+  document.getElementById('pBuy').value = p.buyPrice;
+  document.getElementById('pSell').value = p.sellPrice;
+  document.getElementById('pStock').value = p.stock;
+  document.getElementById('pMin').value = p.minStock;
+  document.getElementById('pUnit').value = p.unit;
+  openModal('prodModal');
+}
+
+function saveProduct(){
+  var name = document.getElementById('pName').value.trim();
+  var buy = parseFloat(document.getElementById('pBuy').value)||0;
+  var sell = parseFloat(document.getElementById('pSell').value)||0;
+  var stock = parseFloat(document.getElementById('pStock').value)||0;
+  var min = parseFloat(document.getElementById('pMin').value)||10;
+  var unit = document.getElementById('pUnit').value;
+  var editId = document.getElementById('editId').value;
+  if(!name){ alert('Enter product name!'); return; }
+  if(editId){
+    P = P.map(function(p){ return p.id==editId ? Object.assign({},p,{name:name,buyPrice:buy,sellPrice:sell,stock:stock,minStock:min,unit:unit}) : p; });
+  } else {
+    P.push({id:Date.now(),name:name,buyPrice:buy,sellPrice:sell,stock:stock,minStock:min,unit:unit,totalSold:0});
+  }
+  saveAll(); closeModal('prodModal'); renderAll();
+}
+
+function openSell(id){
+  var p = P.find(function(x){return x.id===id;});
+  if(!p) return;
+  document.getElementById('sellModalTitle').innerText = 'Sell — '+p.name;
+  document.getElementById('sellId').value = id;
+  document.getElementById('sellQty').value = '1';
+  document.getElementById('sellInfo').innerHTML = '<b>Selling Price:</b> ₹'+p.sellPrice+' / '+p.unit+'<br><b>In Stock:</b> '+p.stock+' '+p.unit+'<br><b>Profit per unit:</b> ₹'+(p.sellPrice-p.buyPrice);
+  openModal('sellModal');
+}
+
+function confirmSell(){
+  var id = parseInt(document.getElementById('sellId').value);
+  var qty = parseFloat(document.getElementById('sellQty').value)||1;
+  var p = P.find(function(x){return x.id===id;});
+  if(!p) return;
+  if(qty > p.stock){ alert('Not enough stock! Only '+p.stock+' '+p.unit+' available.'); return; }
+  P = P.map(function(x){ return x.id===id ? Object.assign({},x,{stock:x.stock-qty, totalSold:(x.totalSold||0)+qty}) : x; });
+  S.unshift({id:Date.now(),productId:id,productName:p.name,qty:qty,unit:p.unit,sellPrice:p.sellPrice,buyPrice:p.buyPrice,revenue:qty*p.sellPrice,profit:qty*(p.sellPrice-p.buyPrice),date:TODAY,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  saveAll(); closeModal('sellModal'); renderAll();
+}
+
+function delProduct(id){ if(confirm('Delete this product?')){ P=P.filter(function(p){return p.id!==id;}); saveAll(); renderAll(); } }
+
+function stockStatus(p){
+  if(p.stock<=0) return 'out';
+  if(p.stock<=p.minStock) return 'low';
+  return 'ok';
+}
+
+function renderAll(){ renderDashboard(); renderInventory(); renderQuickSell(); renderSales(); }
+
+function renderDashboard(){
+  var todaySales = S.filter(function(s){return s.date===TODAY;});
+  var todayRev = todaySales.reduce(function(a,s){return a+s.revenue;},0);
+  var todayProfit = todaySales.reduce(function(a,s){return a+s.profit;},0);
+  var lowCount = P.filter(function(p){return stockStatus(p)==='low';}).length;
+  var outCount = P.filter(function(p){return stockStatus(p)==='out';}).length;
+  document.getElementById('d1').innerText = P.length;
+  document.getElementById('d2').innerText = '₹'+todayRev.toFixed(0);
+  document.getElementById('d3').innerText = '₹'+todayProfit.toFixed(0);
+  document.getElementById('d4').innerText = lowCount;
+  document.getElementById('d5').innerText = outCount;
+
+  // Alert banner
+  var lowItems = P.filter(function(p){return stockStatus(p)!=='ok';});
+  var banner = document.getElementById('alertBanner');
+  if(lowItems.length>0){
+    banner.classList.add('show');
+    document.getElementById('alertList').innerHTML = lowItems.map(function(p){
+      var st = stockStatus(p);
+      return '<div class="ab-item"><strong>'+p.name+'</strong> — '+(st==='out'?'<span style="color:var(--red)">Out of stock</span>':'<span style="color:var(--orange)">Only '+p.stock+' '+p.unit+' left</span>')+'</div>';
+    }).join('');
+  } else { banner.classList.remove('show'); }
+
+  // Today sales
+  var ds = document.getElementById('d-sales');
+  ds.innerHTML = todaySales.length ? todaySales.slice(0,5).map(saleCard).join('') : '<div class="emp"><span class="emp-icon">🧾</span>No sales today yet</div>';
+
+  // Top products
+  var top = P.slice().sort(function(a,b){return (b.totalSold||0)-(a.totalSold||0);}).slice(0,4);
+  document.getElementById('d-top').innerHTML = top.length ? top.map(function(p){
+    return '<div class="sale-card"><div><div class="sale-name">'+p.name+'</div><div class="sale-meta">'+p.stock+' '+p.unit+' in stock</div></div><div style="text-align:right"><div class="sale-amt">'+((p.totalSold||0)+' sold')+'</div></div></div>';
+  }).join('') : '<div class="emp"><span class="emp-icon">📦</span>Add products to get started</div>';
+}
+
+function renderInventory(){
+  var q = (document.getElementById('searchInp').value||'').toLowerCase();
+  var f = document.getElementById('filterSel').value;
+  var list = P.filter(function(p){
+    var matchQ = p.name.toLowerCase().indexOf(q)!==-1;
+    var matchF = f==='all' || (f==='low'&&stockStatus(p)==='low') || (f==='out'&&stockStatus(p)==='out');
+    return matchQ && matchF;
+  });
+  document.getElementById('inv-list').innerHTML = list.length ? list.map(prodCard).join('') : '<div class="emp"><span class="emp-icon">🔍</span>No products found</div>';
+}
+
+function prodCard(p){
+  var st = stockStatus(p);
+  var bdg = st==='out'?'<span class="badge out">❌ Out of Stock</span>':st==='low'?'<span class="badge low">⚠️ Low Stock</span>':'<span class="badge ok">✓ In Stock</span>';
+  var col = st==='out'?'var(--red)':st==='low'?'var(--orange)':'var(--acc)';
+  return '<div class="pc '+(st!=='ok'?st:'')+'">'
+    +'<div class="pc-left"><div class="pc-name">'+p.name+'</div><div class="pc-meta">Buy ₹'+p.buyPrice+' · Sell ₹'+p.sellPrice+' · Min: '+p.minStock+' '+p.unit+'</div><div style="margin-top:5px;">'+bdg+'</div></div>'
+    +'<div class="pc-right"><div class="pc-stock" style="color:'+col+'">'+p.stock+'</div><div class="pc-unit">'+p.unit+'</div></div>'
+    +'</div>'
+    +'<div class="pc-btns" style="padding:0 0 0 0;margin-top:-4px;margin-bottom:10px;">'
+    +'<button class="pc-btn sell" onclick="openSell('+p.id+')">💰 Sell</button>'
+    +'<button class="pc-btn edit" onclick="openEditProduct('+p.id+')">✏️ Edit</button>'
+    +'<button class="pc-btn del" onclick="delProduct('+p.id+')">🗑️ Delete</button>'
+    +'</div>';
+}
+
+function renderQuickSell(){
+  var grid = document.getElementById('qs-grid');
+  grid.innerHTML = P.length ? P.map(function(p){
+    var out = p.stock<=0;
+    return '<div class="qs-item'+(out?' out-item':'')+'" onclick="openSell('+p.id+')">'
+      +'<div class="qs-name">'+p.name+'</div>'
+      +'<div class="qs-price">₹'+p.sellPrice+' / '+p.unit+'</div>'
+      +'<div class="qs-stock">'+(out?'Out of stock':p.stock+' left')+'</div>'
+      +'</div>';
+  }).join('') : '<div class="emp" style="grid-column:span 2"><span class="emp-icon">📦</span>Add products first</div>';
+}
+
+function saleCard(s){
+  return '<div class="sale-card"><div><div class="sale-name">'+s.productName+'</div><div class="sale-meta">'+s.qty+' '+s.unit+' · Profit: ₹'+s.profit.toFixed(0)+'</div></div><div><div class="sale-amt">₹'+s.revenue.toFixed(0)+'</div><div class="sale-time">'+s.time+'</div></div></div>';
+}
+
+function renderSales(){
+  var totRev = S.reduce(function(a,s){return a+s.revenue;},0);
+  var totProfit = S.reduce(function(a,s){return a+s.profit;},0);
+  document.getElementById('s-total').innerText = '₹'+totRev.toFixed(0);
+  document.getElementById('s-profit').innerText = '₹'+totProfit.toFixed(0);
+  document.getElementById('sales-list').innerHTML = S.length ? S.map(function(s){
+    return '<div class="sale-card"><div><div class="sale-name">'+s.productName+'</div><div class="sale-meta">'+s.qty+' '+s.unit+' · '+s.date+' '+s.time+'</div></div><div><div class="sale-amt">₹'+s.revenue.toFixed(0)+'</div><div class="sale-time" style="color:var(--acc)">+₹'+s.profit.toFixed(0)+' profit</div></div></div>';
+  }).join('') : '<div class="emp"><span class="emp-icon">🧾</span>No sales recorded yet</div>';
+}
+
+renderAll();
+</script>
+</body>
+</html>
