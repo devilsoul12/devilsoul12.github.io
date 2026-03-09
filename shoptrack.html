@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ShopTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --theme: 'normal';
+    }
+    [data-theme='light'] {
+      --bg: #ffffff;
+      --surf: #f8f8ff;
+      --surf2: #f0f0fa;
+      --txt: #0a0a14;
+      --txt2: #5a5a70;
+      --txt3: #a0a0b8;
+      --bdr: rgba(0,0,0,0.06);
+      --bdr2: rgba(0,0,0,0.1);
+    }
+    [data-theme='normal'] {
+      --bg: #f0f0f5;
+      --surf: #ffffff;
+      --surf2: #f7f7fc;
+      --acc: #6c47ff;
+      --acc2: #8b6bff;
+      --acc-soft: rgba(108,71,255,0.08);
+      --grn: #00c896;
+      --grn-soft: rgba(0,200,150,0.1);
+      --red: #ff4757;
+      --red-soft: rgba(255,71,87,0.08);
+      --org: #ff6b35;
+      --org-soft: rgba(255,107,53,0.08);
+      --yel: #ffd32a;
+      --yel-soft: rgba(255,211,42,0.1);
+      --txt: #0a0a14;
+      --txt2: #6b6b80;
+      --txt3: #b0b0c0;
+      --bdr: rgba(0,0,0,0.06);
+      --bdr2: rgba(0,0,0,0.1);
+      --shadow: 0 2px 12px rgba(108,71,255,0.06);
+      --shadow2: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    [data-theme='dark'] {
+      --bg: #0a0a14;
+      --surf: #12121f;
+      --surf2: #1a1a2e;
+      --txt: #f0f0ff;
+      --txt2: #9090b0;
+      --txt3: #505070;
+      --bdr: rgba(255,255,255,0.06);
+      --bdr2: rgba(255,255,255,0.1);
+      --shadow: 0 2px 12px rgba(0,0,0,0.3);
+      --shadow2: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html,body { background:var(--bg); color:var(--txt); font-family:'Manrope',sans-serif; min-height:100vh; touch-action:manipulation; }
+
+    /* MODAL */
+    .modal-ov { position:fixed; inset:0; background:rgba(10,10,20,0.6); backdrop-filter:blur(8px); z-index:9999; display:none; align-items:flex-end; justify-content:center; }
+    .modal-ov.show { display:flex; }
+    .modal { background:var(--surf); border-radius:28px 28px 0 0; padding:24px 20px 44px; width:100%; max-width:560px; animation:slideUp 0.35s cubic-bezier(0.34,1.36,0.64,1); max-height:92vh; overflow-y:auto; }
+    @keyframes slideUp { from{transform:translateY(110%)} to{transform:translateY(0)} }
+    .modal-drag { width:40px; height:4px; background:var(--bdr2); border-radius:4px; margin:0 auto 20px; }
+    .modal-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; margin-bottom:20px; }
+
+    /* HEADER */
+    header { background:var(--acc); padding:16px 20px 14px; position:sticky; top:0; z-index:100; }
+    .h-top { display:flex; justify-content:space-between; align-items:center; }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo-icon { width:36px; height:36px; background:rgba(255,255,255,0.2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .logo-text { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.02em; }
+    .logo-sub { font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.6); margin-top:1px; }
+    .h-date { font-size:11px; color:rgba(255,255,255,0.7); font-weight:500; }
+    .h-stats { display:flex; gap:8px; margin-top:14px; }
+    .h-stat { flex:1; background:rgba(255,255,255,0.15); border-radius:12px; padding:10px 12px; }
+    .h-stat-val { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; color:#fff; }
+    .h-stat-lbl { font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.6); margin-top:1px; }
+
+    /* TABS */
+    .tabs { display:flex; background:var(--surf); border-bottom:1px solid var(--bdr); overflow-x:auto; scrollbar-width:none; position:sticky; top:0; z-index:99; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab { padding:14px 18px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--txt3); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; }
+    .tab.on { color:var(--acc); border-bottom-color:var(--acc); }
+
+    /* PAGES */
+    .pg { display:none; padding:16px 16px 100px; max-width:560px; margin:0 auto; }
+    .pg.on { display:block; }
+
+    /* FAB */
+    .fab { position:fixed; bottom:24px; right:20px; width:56px; height:56px; background:var(--acc); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; box-shadow:0 4px 20px rgba(108,71,255,0.4); z-index:200; border:none; color:#fff; transition:transform 0.15s; }
+    .fab:active { transform:scale(0.93); }
+
+    /* ALERT */
+    .alert-strip { background:linear-gradient(135deg,#fff5f0,#fff); border:1.5px solid rgba(255,107,53,0.25); border-radius:16px; padding:12px 14px; margin-bottom:14px; display:none; }
+    .alert-strip.show { display:block; }
+    .alert-title { font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--org); margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+    .alert-item { font-size:13px; color:var(--txt2); padding:4px 0; display:flex; justify-content:space-between; border-bottom:1px solid var(--bdr); }
+    .alert-item:last-child { border:none; }
+
+    /* SECTION */
+    .sec { font-size:10px; font-weight:800; letter-spacing:0.16em; text-transform:uppercase; color:var(--txt3); margin:20px 0 10px; display:flex; align-items:center; justify-content:space-between; }
+    .sec-line { flex:1; height:1px; background:var(--bdr); margin-left:10px; }
+
+    /* PRODUCT CARD */
+    .pc { background:var(--surf); border-radius:18px; padding:16px; margin-bottom:10px; box-shadow:var(--shadow); border:1.5px solid var(--bdr); position:relative; overflow:hidden; }
+    .pc.low { border-color:rgba(255,107,53,0.3); }
+    .pc.out { border-color:rgba(255,71,87,0.3); }
+    .pc-accent { position:absolute; top:0; left:0; bottom:0; width:4px; border-radius:4px 0 0 4px; }
+    .pc.low .pc-accent { background:var(--org); }
+    .pc.out .pc-accent { background:var(--red); }
+    .pc-main { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; padding-left:8px; }
+    .pc-name { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:2px; }
+    .pc-meta { font-size:12px; color:var(--txt2); }
+    .pc-stock-big { text-align:right; }
+    .pc-num { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; line-height:1; }
+    .pc-unit { font-size:10px; color:var(--txt3); text-transform:uppercase; letter-spacing:0.08em; }
+    .pc-row { display:flex; gap:6px; padding-left:8px; }
+    .pc-tag { font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; }
+    .pc-tag.ok { background:var(--grn-soft); color:var(--grn); }
+    .pc-tag.low { background:var(--org-soft); color:var(--org); }
+    .pc-tag.out { background:var(--red-soft); color:var(--red); }
+    .pc-actions { display:flex; gap:7px; margin-top:12px; padding-left:8px; }
+    .pa { flex:1; padding:9px 4px; border-radius:10px; border:none; font-size:12px; font-weight:700; cursor:pointer; font-family:'Manrope',sans-serif; text-align:center; }
+    .pa.sell { background:var(--acc); color:#fff; }
+    .pa.edit { background:var(--surf2); color:var(--txt2); border:1px solid var(--bdr2); }
+    .pa.del { background:var(--red-soft); color:var(--red); }
+
+    /* QUICK SELL GRID */
+    .qs-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    .qs-card { background:var(--surf); border-radius:18px; padding:16px; cursor:pointer; box-shadow:var(--shadow); border:1.5px solid var(--bdr); transition:transform 0.15s, box-shadow 0.15s; }
+    .qs-card:active { transform:scale(0.96); box-shadow:var(--shadow2); }
+    .qs-card.empty { opacity:0.4; pointer-events:none; }
+    .qs-icon { font-size:28px; margin-bottom:8px; }
+    .qs-name { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; margin-bottom:4px; }
+    .qs-price { font-size:13px; font-weight:700; color:var(--acc); }
+    .qs-left { font-size:11px; color:var(--txt3); margin-top:3px; }
+
+    /* SALE CARD */
+    .sc-row { background:var(--surf); border-radius:14px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow); }
+    .sc-name { font-weight:700; font-size:14px; }
+    .sc-meta { font-size:12px; color:var(--txt2); margin-top:2px; }
+    .sc-amt { font-family:'Syne',sans-serif; font-size:20px; font-weight:700; color:var(--grn); }
+    .sc-profit { font-size:11px; color:var(--txt3); text-align:right; margin-top:2px; }
+
+    /* STATS ROW */
+    .srow { display:grid; gap:10px; margin-bottom:14px; }
+    .srow.s2 { grid-template-columns:1fr 1fr; }
+    .srow.s3 { grid-template-columns:1fr 1fr 1fr; }
+    .stat-card { background:var(--surf); border-radius:16px; padding:14px; box-shadow:var(--shadow); }
+    .stat-icon { font-size:22px; margin-bottom:6px; }
+    .stat-val { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; line-height:1; margin-bottom:3px; }
+    .stat-lbl { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--txt3); }
+
+    /* INVOICE */
+    .inv-preview { background:var(--surf2); border:1.5px dashed var(--bdr2); border-radius:16px; padding:20px; margin-top:14px; font-size:13px; }
+    .inv-header { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; margin-bottom:4px; }
+    .inv-sub { font-size:11px; color:var(--txt3); margin-bottom:16px; }
+    .inv-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--bdr); }
+    .inv-row:last-child { border:none; font-weight:700; font-size:15px; }
+    .inv-total { margin-top:12px; padding-top:12px; border-top:2px solid var(--acc); }
+
+    /* FORM */
+    .fg { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+    .fg label { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--txt3); font-weight:700; }
+    .fg input, .fg select { background:var(--bg); border:1.5px solid var(--bdr2); border-radius:12px; padding:12px 14px; color:var(--txt); font-size:15px; font-family:'Manrope',sans-serif; outline:none; width:100%; font-weight:500; }
+    .fg input:focus, .fg select:focus { border-color:var(--acc); background:var(--surf); }
+    .fg2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .btnp { width:100%; padding:15px; background:var(--acc); color:#fff; border:none; border-radius:14px; font-size:15px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer; letter-spacing:0.02em; }
+    .btnp:active { opacity:0.85; }
+    .btns { width:100%; padding:15px; background:var(--grn); color:#fff; border:none; border-radius:14px; font-size:15px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer; margin-top:8px; }
+
+    /* CHART */
+    .chart-card { background:var(--surf); border-radius:18px; padding:18px; margin-bottom:14px; box-shadow:var(--shadow); }
+    .chart-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:14px; }
+
+    .emp { text-align:center; color:var(--txt3); padding:36px 0; }
+    .emp-icon { font-size:40px; display:block; margin-bottom:10px; }
+    .emp-txt { font-size:13px; }
+
+    /* SELL QTY CONTROL */
+    .qty-ctrl { display:flex; align-items:center; gap:12px; background:var(--bg); border-radius:14px; padding:8px 16px; margin-bottom:14px; }
+    .qty-btn { width:40px; height:40px; border-radius:10px; background:var(--acc); color:#fff; border:none; font-size:22px; cursor:pointer; font-weight:700; display:flex; align-items:center; justify-content:center; }
+    .qty-num { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; flex:1; text-align:center; }
+    .qty-unit { font-size:12px; color:var(--txt3); text-align:center; margin-top:-6px; margin-bottom:4px; }
+    .sell-info-box { background:var(--acc-soft); border-radius:12px; padding:14px; margin-bottom:14px; }
+    .sib-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; }
+    .sib-row:last-child { margin:0; font-weight:700; font-size:15px; color:var(--acc); }
+  </style>
+</head>
+<body>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-ov" id="prodModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="prodModalTitle">Add Product</div>
+    <input type="hidden" id="editId">
+    <div class="fg"><label>Product Name</label><input id="pName" type="text" placeholder="e.g. Tata Salt 1kg"/></div>
+    <div class="fg2">
+      <div class="fg"><label>Buy Price (₹)</label><input id="pBuy" type="number" placeholder="18"/></div>
+      <div class="fg"><label>Sell Price (₹)</label><input id="pSell" type="number" placeholder="22"/></div>
+    </div>
+    <div class="fg2">
+      <div class="fg"><label>Stock</label><input id="pStock" type="number" placeholder="50"/></div>
+      <div class="fg"><label>Low Alert</label><input id="pMin" type="number" placeholder="10"/></div>
+    </div>
+    <div class="fg"><label>Unit</label>
+      <select id="pUnit">
+        <option>piece</option><option>kg</option><option>g</option><option>litre</option><option>ml</option><option>dozen</option><option>packet</option><option>box</option>
+      </select>
+    </div>
+    <button class="btnp" onclick="saveProduct()">Save Product ✓</button>
+  </div>
+</div>
+
+<!-- SELL MODAL -->
+<div class="modal-ov" id="sellModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="sellModalTitle">Record Sale</div>
+    <input type="hidden" id="sellId">
+    <div class="qty-ctrl">
+      <button class="qty-btn" onclick="adjQty(-1)">−</button>
+      <div style="flex:1;text-align:center;">
+        <input id="qtyNum" type="number" value="1" min="0.1" step="0.1" oninput="onQtyInput()" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;width:100%;text-align:center;border:none;background:transparent;outline:none;color:var(--txt);">
+        <div class="qty-unit" id="qtyUnit">piece</div>
+      </div>
+      <button class="qty-btn" onclick="adjQty(1)">+</button>
+    </div>
+    <div class="sell-info-box" id="sellInfoBox"></div>
+    <button class="btns" onclick="confirmSell()">✓ Confirm Sale</button>
+  </div>
+</div>
+
+<!-- INVOICE MODAL -->
+<div class="modal-ov" id="invModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">🧾 Create Invoice</div>
+    <div class="fg"><label>Customer Name</label><input id="invName" type="text" placeholder="Customer name (optional)"/></div>
+    <div id="invItems"></div>
+    <button class="btnp" style="background:var(--org);margin-bottom:14px;" onclick="addInvItem()">+ Add Item</button>
+    <div class="inv-preview" id="invPreview"></div>
+    <button class="btns" onclick="generateInvoice()" style="margin-top:14px">Generate Invoice 🧾</button>
+    <div id="invShareBtns" style="display:none;margin-top:8px;display:none;">
+      <button class="btnp" onclick="copyInvoice()" style="background:var(--acc);margin-bottom:8px;">📋 Copy for WhatsApp</button>
+    </div>
+    <button class="btnp" onclick="closeModal('invModal')" style="background:var(--surf2);color:var(--txt2);margin-top:8px;border:1px solid var(--bdr2);">Close</button>
+  </div>
+</div>
+
+<header>
+  <div class="h-top">
+    <div class="logo">
+      <div class="logo-icon">🏪</div>
+      <div>
+        <div class="logo-text">ShopTrack</div>
+        <div class="logo-sub">Smart Inventory</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+    <div class="h-date" id="hDate"></div>
+    <button id="themeBtn" onclick="cycleTheme()" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer;color:#fff;">🌙</button>
+  </div>
+  </div>
+  <div class="h-stats">
+    <div class="h-stat"><div class="h-stat-val" id="hRev">₹0</div><div class="h-stat-lbl">Today Revenue</div></div>
+    <div class="h-stat"><div class="h-stat-val" id="hProfit">₹0</div><div class="h-stat-lbl">Today Profit</div></div>
+    <div class="h-stat"><div class="h-stat-val" id="hItems">0</div><div class="h-stat-lbl">Products</div></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab on" onclick="showTab('dashboard',this)">Dashboard</div>
+  <div class="tab" onclick="showTab('inventory',this)">Inventory</div>
+  <div class="tab" onclick="showTab('sell',this)">Quick Sell</div>
+  <div class="tab" onclick="showTab('sales',this)">Sales</div>
+  <div class="tab" onclick="showTab('analytics',this)">Analytics</div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="pg on" id="pg-dashboard">
+  <div class="alert-strip" id="alertStrip">
+    <div class="alert-title">⚠️ Needs Attention</div>
+    <div id="alertList"></div>
+  </div>
+  <div class="srow s3">
+    <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-val" id="d-low" style="color:var(--org)">0</div><div class="stat-lbl">Low Stock</div></div>
+    <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-val" id="d-out" style="color:var(--red)">0</div><div class="stat-lbl">Out of Stock</div></div>
+    <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-val" id="d-sales">0</div><div class="stat-lbl">Sales Today</div></div>
+  </div>
+  <div class="sec">Today's Sales <div class="sec-line"></div></div>
+  <div id="dash-sales"></div>
+  <div class="sec">Top Selling <div class="sec-line"></div></div>
+  <div id="dash-top"></div>
+</div>
+
+<!-- INVENTORY -->
+<div class="pg" id="pg-inventory">
+  <div style="display:flex;gap:8px;margin-bottom:14px;margin-top:4px;">
+    <input id="searchInp" type="text" placeholder="🔍 Search..." oninput="renderInventory()" style="flex:1;background:var(--surf);border:1.5px solid var(--bdr2);border-radius:12px;padding:11px 14px;font-size:14px;font-family:'Manrope',sans-serif;outline:none;color:var(--txt);">
+    <select id="filterSel" onchange="renderInventory()" style="background:var(--surf);border:1.5px solid var(--bdr2);border-radius:12px;padding:11px 10px;font-size:12px;font-family:'Manrope',sans-serif;color:var(--txt2);outline:none;font-weight:600;">
+      <option value="all">All</option><option value="low">Low</option><option value="out">Out</option>
+    </select>
+  </div>
+  <div id="inv-list"></div>
+</div>
+
+<!-- QUICK SELL -->
+<div class="pg" id="pg-sell">
+  <div style="margin:4px 0 14px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:13px;color:var(--txt2);font-weight:500;">Tap any product to record sale</div>
+    <button onclick="openInvoice()" style="background:var(--org);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif;">🧾 Invoice</button>
+  </div>
+  <div class="qs-grid" id="qs-grid"></div>
+</div>
+
+<!-- SALES -->
+<div class="pg" id="pg-sales">
+  <div class="srow s2" style="margin-top:4px;">
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val" id="st-rev">₹0</div><div class="stat-lbl">Total Revenue</div></div>
+    <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-val" id="st-profit">₹0</div><div class="stat-lbl">Total Profit</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <input type="date" id="salesDate" onchange="renderSales()" style="flex:1;background:var(--surf);border:1.5px solid var(--bdr2);border-radius:12px;padding:10px 12px;font-size:14px;font-family:Manrope,sans-serif;outline:none;color:var(--txt);">
+    <button onclick="document.getElementById('salesDate').value='';renderSales();" style="background:var(--surf);border:1.5px solid var(--bdr2);border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--txt2);font-family:Manrope,sans-serif;">All</button>
+  </div>
+  <div class="sec" id="salesSecLabel">All Sales <div class="sec-line"></div></div>
+  <div id="sales-list"></div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="pg" id="pg-analytics">
+  <div class="srow s2" style="margin-top:4px;">
+    <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-val" id="an-best" style="font-size:14px;font-weight:800;line-height:1.3;word-break:break-word;">—</div><div class="stat-lbl">Best Seller</div></div>
+    <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-val" id="an-margin">0%</div><div class="stat-lbl">Avg Margin</div></div>
+  </div>
+  <div class="chart-card"><div class="chart-title">Daily Revenue (Last 7 Days)</div><canvas id="revChart"></canvas></div>
+  <div class="chart-card"><div class="chart-title">Top Products by Sales</div><canvas id="topChart"></canvas></div>
+</div>
+
+<button class="fab" onclick="openAddProduct()">+</button>
+
+<script>
+var P = JSON.parse(localStorage.getItem('st2_products')||'[]');
+var S = JSON.parse(localStorage.getItem('st2_sales')||'[]');
+var TODAY = new Date().toISOString().split('T')[0];
+var invItems = [];
+var revChart, topChart;
+var currentSellQty = 1;
+
+document.getElementById('hDate').innerText = new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+var salesDateEl = document.getElementById('salesDate');
+if(salesDateEl) salesDateEl.value = TODAY;
+
+function saveAll(){ localStorage.setItem('st2_products',JSON.stringify(P)); localStorage.setItem('st2_sales',JSON.stringify(S)); }
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function showTab(name,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.getElementById('pg-'+name).classList.add('on');
+  if(name==='analytics') doCharts();
+  else // THEME
+var themes = ['normal','dark','light'];
+var themeIcons = {normal:'🌤️', dark:'🌙', light:'☀️'};
+var currentTheme = localStorage.getItem('st2_theme')||'normal';
+
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').innerText = themeIcons[t];
+  localStorage.setItem('st2_theme', t);
+  currentTheme = t;
+}
+
+function cycleTheme(){
+  var idx = themes.indexOf(currentTheme);
+  var next = themes[(idx+1)%themes.length];
+  applyTheme(next);
+}
+
+applyTheme(currentTheme);
+renderAll();
+}
+
+function stockStatus(p){ return p.stock<=0?'out':p.stock<=p.minStock?'low':'ok'; }
+
+function openAddProduct(){
+  document.getElementById('prodModalTitle').innerText='Add Product';
+  document.getElementById('editId').value='';
+  ['pName','pBuy','pSell','pStock'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('pMin').value='10';
+  document.getElementById('pUnit').value='piece';
+  openModal('prodModal');
+}
+
+function openEditProduct(id){
+  var p=P.find(function(x){return x.id===id;});
+  if(!p)return;
+  document.getElementById('prodModalTitle').innerText='Edit Product';
+  document.getElementById('editId').value=id;
+  document.getElementById('pName').value=p.name;
+  document.getElementById('pBuy').value=p.buyPrice;
+  document.getElementById('pSell').value=p.sellPrice;
+  document.getElementById('pStock').value=p.stock;
+  document.getElementById('pMin').value=p.minStock;
+  document.getElementById('pUnit').value=p.unit;
+  openModal('prodModal');
+}
+
+function saveProduct(){
+  var name=document.getElementById('pName').value.trim();
+  if(!name){alert('Enter product name!');return;}
+  var buy=parseFloat(document.getElementById('pBuy').value)||0;
+  var sell=parseFloat(document.getElementById('pSell').value)||0;
+  var stock=parseFloat(document.getElementById('pStock').value)||0;
+  var min=parseFloat(document.getElementById('pMin').value)||10;
+  var unit=document.getElementById('pUnit').value;
+  var eid=document.getElementById('editId').value;
+  if(eid){ P=P.map(function(p){return p.id==eid?Object.assign({},p,{name:name,buyPrice:buy,sellPrice:sell,stock:stock,minStock:min,unit:unit}):p;}); }
+  else { P.push({id:Date.now(),name:name,buyPrice:buy,sellPrice:sell,stock:stock,minStock:min,unit:unit,totalSold:0}); }
+  saveAll(); closeModal('prodModal'); renderAll();
+}
+
+function openSell(id){
+  var p=P.find(function(x){return x.id===id;});
+  if(!p||p.stock<=0)return;
+  document.getElementById('sellModalTitle').innerText=p.name;
+  document.getElementById('sellId').value=id;
+  currentSellQty=1;
+  document.getElementById('qtyNum').value=1;
+  document.getElementById('qtyUnit').innerText=p.unit;
+  updateSellInfo(p,1);
+  openModal('sellModal');
+}
+
+function adjQty(d){
+  var id=parseInt(document.getElementById('sellId').value);
+  var p=P.find(function(x){return x.id===id;});
+  if(!p)return;
+  var step = p.unit==='kg'||p.unit==='g'||p.unit==='litre'||p.unit==='ml' ? 0.1 : 1;
+  currentSellQty=Math.max(step, parseFloat((currentSellQty+d*step).toFixed(2)));
+  document.getElementById('qtyNum').value=currentSellQty;
+  updateSellInfo(p,currentSellQty);
+}
+
+function onQtyInput(){
+  var id=parseInt(document.getElementById('sellId').value);
+  var p=P.find(function(x){return x.id===id;});
+  if(!p)return;
+  currentSellQty=parseFloat(document.getElementById('qtyNum').value)||1;
+  updateSellInfo(p,currentSellQty);
+}
+
+function getProductEmoji(name){
+  var n=name.toLowerCase();
+  if(n.match(/rice|chawal|basmati/)) return '🍚';
+  if(n.match(/milk|doodh/)) return '🥛';
+  if(n.match(/sugar|chini/)) return '🍬';
+  if(n.match(/salt|namak/)) return '🧂';
+  if(n.match(/oil|tel|ghee/)) return '🫙';
+  if(n.match(/atta|flour|wheat/)) return '🌾';
+  if(n.match(/dal|lentil|pulse/)) return '🫘';
+  if(n.match(/tea|chai/)) return '🍵';
+  if(n.match(/coffee/)) return '☕';
+  if(n.match(/biscuit|cookie/)) return '🍪';
+  if(n.match(/bread|pav/)) return '🍞';
+  if(n.match(/egg|anda/)) return '🥚';
+  if(n.match(/soap|sabun/)) return '🧼';
+  if(n.match(/shampoo|hair/)) return '🧴';
+  if(n.match(/toothpaste|tooth/)) return '🦷';
+  if(n.match(/water|paani/)) return '💧';
+  if(n.match(/juice|drink/)) return '🧃';
+  if(n.match(/chips|snack/)) return '🍟';
+  if(n.match(/chocolate|choco/)) return '🍫';
+  if(n.match(/match|matchbox/)) return '🔥';
+  if(n.match(/candle/)) return '🕯️';
+  if(n.match(/pen|pencil/)) return '✏️';
+  if(n.match(/notebook|copy/)) return '📓';
+  if(n.match(/cold drink|cola|pepsi|coke/)) return '🥤';
+  if(n.match(/maggi|noodle/)) return '🍜';
+  if(n.match(/tomato|tamatar/)) return '🍅';
+  if(n.match(/onion|pyaz/)) return '🧅';
+  if(n.match(/potato|aloo/)) return '🥔';
+  if(n.match(/banana|kela/)) return '🍌';
+  if(n.match(/apple/)) return '🍎';
+  if(n.match(/masala|spice/)) return '🌶️';
+  if(n.match(/paneer/)) return '🧀';
+  if(n.match(/butter|makkhan/)) return '🧈';
+  return '📦';
+}
+
+function updateSellInfo(p,qty){
+  var rev=(qty*p.sellPrice).toFixed(0);
+  var profit=(qty*(p.sellPrice-p.buyPrice)).toFixed(0);
+  document.getElementById('sellInfoBox').innerHTML=
+    '<div class="sib-row"><span>Sell Price</span><span>₹'+p.sellPrice+' / '+p.unit+'</span></div>'+
+    '<div class="sib-row"><span>In Stock</span><span>'+p.stock+' '+p.unit+'</span></div>'+
+    '<div class="sib-row"><span>Profit / unit</span><span>₹'+(p.sellPrice-p.buyPrice)+'</span></div>'+
+    '<div class="sib-row"><span>Total Revenue</span><span>₹'+rev+'</span></div>'+
+    '<div class="sib-row"><span>Total Profit</span><span>₹'+profit+'</span></div>';
+}
+
+function confirmSell(){
+  var id=parseInt(document.getElementById('sellId').value);
+  var qty=currentSellQty;
+  var p=P.find(function(x){return x.id===id;});
+  if(!p||qty>p.stock){alert('Not enough stock!');return;}
+  P=P.map(function(x){return x.id===id?Object.assign({},x,{stock:x.stock-qty,totalSold:(x.totalSold||0)+qty}):x;});
+  S.unshift({id:Date.now(),productId:id,productName:p.name,qty:qty,unit:p.unit,sellPrice:p.sellPrice,buyPrice:p.buyPrice,revenue:qty*p.sellPrice,profit:qty*(p.sellPrice-p.buyPrice),date:TODAY,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  saveAll(); closeModal('sellModal'); renderAll();
+}
+
+function delProduct(id){
+  if(confirm('Delete this product?')){P=P.filter(function(p){return p.id!==id;});saveAll();renderAll();}
+}
+
+// INVOICE
+function copyInvoice(){
+  var txt=localStorage.getItem('st2_lastInvoice')||'No invoice generated';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){
+      var btn=document.querySelector('[onclick="copyInvoice()"]');
+      btn.innerText='✅ Copied! Paste in WhatsApp';
+      setTimeout(function(){btn.innerText='📋 Copy for WhatsApp';},2500);
+    });
+  } else {
+    var ta=document.createElement('textarea');
+    ta.value=txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('Copied! Paste in WhatsApp 📋');
+  }
+}
+
+function openInvoice(){
+  document.getElementById('invItems').innerHTML='';
+  document.getElementById('invName').value='';
+  document.getElementById('invShareBtns').style.display='none';
+  // Restore last invoice if exists
+  var last=localStorage.getItem('st2_lastInvoice');
+  if(last){
+    var lines=last.split('\n');
+    document.getElementById('invPreview').innerHTML=
+      '<div class="inv-header">'+lines[0]+'</div>'+
+      '<div class="inv-sub">'+lines[1]+'<br>'+lines[2]+'</div>'+
+      lines.slice(4,lines.length-3).map(function(l){
+        var parts=l.split('=');
+        return '<div class="inv-row"><span>'+parts[0]+'</span><span>'+(parts[1]||'')+'</span></div>';
+      }).join('')+
+      '<div class="inv-row inv-total"><span>TOTAL</span><span style="color:var(--acc)">'+lines[lines.length-2].replace('TOTAL: ','₹').replace('TOTAL:','₹')+'</span></div>';
+    document.getElementById('invShareBtns').style.display='block';
+  } else {
+    document.getElementById('invPreview').innerHTML='';
+  }
+  openModal('invModal');
+  addInvItem();
+}
+
+function addInvItem(){
+  if(P.length===0){ alert('Add products first!'); return; }
+  var div=document.createElement('div');
+  div.className='inv-item-row';
+  div.style.cssText='background:var(--surf2);border:1.5px solid var(--bdr2);border-radius:12px;padding:12px;margin-bottom:10px;position:relative;';
+  div.innerHTML=
+    '<button onclick="this.parentNode.remove()" style="position:absolute;top:8px;right:8px;background:var(--red-soft);color:var(--red);border:none;border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer;font-weight:700;">✕</button>'+
+    '<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px;">Product</div>'+
+    '<select class="inv-prod-sel" style="width:100%;background:var(--bg);border:1.5px solid var(--bdr2);border-radius:10px;padding:10px;font-size:14px;margin-bottom:8px;font-family:Manrope,sans-serif;outline:none;color:var(--txt);">'+
+    P.map(function(p){return '<option value="'+p.id+'">'+p.name+' (₹'+p.sellPrice+'/'+p.unit+')</option>';}).join('')+
+    '</select>'+
+    '<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px;">Quantity</div>'+
+    '<input type="number" class="inv-qty" placeholder="e.g. 2" value="1" min="0.1" step="0.1" style="width:100%;background:var(--bg);border:1.5px solid var(--bdr2);border-radius:10px;padding:10px;font-size:14px;font-family:Manrope,sans-serif;outline:none;color:var(--txt);">';
+  document.getElementById('invItems').appendChild(div);
+}
+
+function generateInvoice(){
+  var customer=document.getElementById('invName').value||'Customer';
+  var rows=document.querySelectorAll('.inv-item-row');
+  if(rows.length===0){ alert('Please add at least one item first!'); return; }
+  var html=''; var total=0; var hasItems=false;
+  rows.forEach(function(row){
+    var sel=row.querySelector('.inv-prod-sel');
+    var qty=row.querySelector('.inv-qty');
+    if(!sel||!qty)return;
+    var p=P.find(function(x){return x.id==sel.value;});
+    if(!p)return;
+    var q=parseFloat(qty.value)||1;
+    var amt=q*p.sellPrice;
+    total+=amt; hasItems=true;
+    html+='<div class="inv-row"><span>'+p.name+' × '+q+' '+p.unit+'</span><span>₹'+amt.toFixed(0)+'</span></div>';
+  });
+  if(!hasItems){ alert('No valid items found!'); return; }
+  var now=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  var invNo='INV-'+Date.now().toString().slice(-6);
+  var invHTML=
+    '<div class="inv-header">🏪 ShopTrack Invoice</div>'+
+    '<div class="inv-sub">'+invNo+' · '+now+' · '+customer+'</div>'+
+    html+
+    '<div class="inv-row inv-total"><span>TOTAL AMOUNT</span><span style="color:var(--acc)">₹'+total.toFixed(0)+'</span></div>';
+  document.getElementById('invPreview').innerHTML=invHTML;
+  document.getElementById('invShareBtns').style.display='block';
+
+  // Save last invoice as plain text for copying
+  var lines=['🏪 ShopTrack Invoice','No: '+invNo+' | '+now,'Customer: '+customer,'─────────────────'];
+  document.querySelectorAll('.inv-item-row').forEach(function(row){
+    var sel=row.querySelector('.inv-prod-sel');
+    var qty=row.querySelector('.inv-qty');
+    if(!sel||!qty)return;
+    var p=P.find(function(x){return x.id==sel.value;});
+    if(!p)return;
+    var q=parseFloat(qty.value)||1;
+    lines.push(p.name+' × '+q+' '+p.unit+' = ₹'+(q*p.sellPrice).toFixed(0));
+  });
+  lines.push('─────────────────');
+  lines.push('TOTAL: ₹'+total.toFixed(0));
+  lines.push('Thank you! 🙏');
+  localStorage.setItem('st2_lastInvoice', lines.join('\n'));
+}
+
+function renderAll(){
+  var td=S.filter(function(s){return s.date===TODAY;});
+  var tRev=td.reduce(function(a,s){return a+s.revenue;},0);
+  var tProfit=td.reduce(function(a,s){return a+s.profit;},0);
+  document.getElementById('hRev').innerText='₹'+tRev.toFixed(0);
+  document.getElementById('hProfit').innerText='₹'+tProfit.toFixed(0);
+  document.getElementById('hItems').innerText=P.length;
+
+  var low=P.filter(function(p){return stockStatus(p)==='low';});
+  var out=P.filter(function(p){return stockStatus(p)==='out';});
+  document.getElementById('d-low').innerText=low.length;
+  document.getElementById('d-out').innerText=out.length;
+  document.getElementById('d-sales').innerText=td.length;
+
+  var alerts=[...low,...out];
+  var ab=document.getElementById('alertStrip');
+  if(alerts.length){
+    ab.classList.add('show');
+    document.getElementById('alertList').innerHTML=alerts.map(function(p){
+      var st=stockStatus(p);
+      return '<div class="alert-item"><span>'+p.name+'</span><span style="color:'+(st==='out'?'var(--red)':'var(--org)')+'font-weight:600">'+(st==='out'?'Out of stock':'Only '+p.stock+' left')+'</span></div>';
+    }).join('');
+  } else { ab.classList.remove('show'); }
+
+  document.getElementById('dash-sales').innerHTML=td.length?td.slice(0,5).map(saleRow).join(''):'<div class="emp"><span class="emp-icon">🧾</span><div class="emp-txt">No sales today yet</div></div>';
+
+  var top=P.slice().sort(function(a,b){return (b.totalSold||0)-(a.totalSold||0);}).slice(0,4);
+  document.getElementById('dash-top').innerHTML=top.filter(function(p){return p.totalSold>0;}).map(function(p){
+    return '<div class="sc-row"><div><div class="sc-name">'+p.name+'</div><div class="sc-meta">'+p.stock+' '+p.unit+' remaining</div></div><div style="text-align:right"><div class="sc-amt" style="color:var(--acc)">'+(p.totalSold||0)+' sold</div></div></div>';
+  }).join('')||'<div class="emp"><span class="emp-icon">📊</span><div class="emp-txt">Start selling to see top products</div></div>';
+
+  renderInventory();
+  renderQuickSell();
+  renderSales();
+}
+
+function renderInventory(){
+  var q=(document.getElementById('searchInp').value||'').toLowerCase();
+  var f=document.getElementById('filterSel').value;
+  var list=P.filter(function(p){
+    return p.name.toLowerCase().includes(q)&&(f==='all'||(f==='low'&&stockStatus(p)==='low')||(f==='out'&&stockStatus(p)==='out'));
+  });
+  document.getElementById('inv-list').innerHTML=list.length?list.map(prodCard).join(''):'<div class="emp"><span class="emp-icon">🔍</span><div class="emp-txt">No products found</div></div>';
+}
+
+function prodCard(p){
+  var st=stockStatus(p);
+  var col=st==='out'?'var(--red)':st==='low'?'var(--org)':'var(--grn)';
+  var margin=p.buyPrice>0?Math.round((p.sellPrice-p.buyPrice)/p.buyPrice*100):0;
+  return '<div class="pc '+st+'">'
+    +'<div class="pc-accent"></div>'
+    +'<div class="pc-main">'
+    +'<div class="pc-left"><div class="pc-name">'+p.name+'</div><div class="pc-meta">Buy ₹'+p.buyPrice+' · Sell ₹'+p.sellPrice+' · Margin '+margin+'%</div></div>'
+    +'<div class="pc-stock-big"><div class="pc-num" style="color:'+col+'">'+p.stock+'</div><div class="pc-unit">'+p.unit+'</div></div>'
+    +'</div>'
+    +'<div class="pc-row"><span class="pc-tag '+st+'">'+(st==='out'?'❌ Out of Stock':st==='low'?'⚠️ Low Stock':'✓ In Stock')+'</span><span class="pc-tag" style="background:var(--yel-soft);color:var(--gold)">'+margin+'% margin</span></div>'
+    +'<div class="pc-actions">'
+    +'<button class="pa sell" onclick="openSell('+p.id+')">💰 Sell</button>'
+    +'<button class="pa edit" onclick="openEditProduct('+p.id+')">✏️ Edit</button>'
+    +'<button class="pa del" onclick="delProduct('+p.id+')">🗑️</button>'
+    +'</div></div>';
+}
+
+function renderQuickSell(){
+  var g=document.getElementById('qs-grid');
+  g.innerHTML=P.length?P.map(function(p){
+    var out=p.stock<=0;
+    var emoji = getProductEmoji(p.name);
+    return '<div class="qs-card'+(out?' empty':'')+'" onclick="openSell('+p.id+')">'
+      +'<div class="qs-icon">'+emoji+'</div>'
+      +'<div class="qs-name">'+p.name+'</div>'
+      +'<div class="qs-price">₹'+p.sellPrice+' / '+p.unit+'</div>'
+      +'<div class="qs-left">'+(out?'Out of stock':p.stock+' left')+'</div>'
+      +'</div>';
+  }).join(''):'<div class="emp" style="grid-column:span 2"><span class="emp-icon">📦</span><div class="emp-txt">Add products first</div></div>';
+}
+
+function saleRow(s){
+  return '<div class="sc-row"><div><div class="sc-name">'+s.productName+'</div><div class="sc-meta">'+s.qty+' '+s.unit+' · '+s.date+' · '+s.time+'</div></div><div><div class="sc-amt">₹'+s.revenue.toFixed(0)+'</div><div class="sc-profit">+₹'+s.profit.toFixed(0)+' profit</div></div></div>';
+}
+
+function renderSales(){
+  var dateFilter=document.getElementById('salesDate')?document.getElementById('salesDate').value:'';
+  var filtered=dateFilter?S.filter(function(s){return s.date===dateFilter;}):S;
+  var tRev=filtered.reduce(function(a,s){return a+s.revenue;},0);
+  var tProfit=filtered.reduce(function(a,s){return a+s.profit;},0);
+  document.getElementById('st-rev').innerText='₹'+tRev.toFixed(0);
+  document.getElementById('st-profit').innerText='₹'+tProfit.toFixed(0);
+  var label=dateFilter?new Date(dateFilter).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'All';
+  var secEl=document.getElementById('salesSecLabel');
+  if(secEl) secEl.innerHTML=label+' Sales <div class="sec-line"></div>';
+  document.getElementById('sales-list').innerHTML=filtered.length?filtered.map(saleRow).join(''):'<div class="emp"><span class="emp-icon">🧾</span><div class="emp-txt">No sales '+(dateFilter?'on this date':'yet')+'</div></div>';
+}
+
+function doCharts(){
+  renderAll();
+  var top=P.slice().sort(function(a,b){return (b.totalSold||0)-(a.totalSold||0);}).slice(0,5);
+  var best=top[0];
+  document.getElementById('an-best').innerText=best?best.name:'—';
+  var avgMargin=P.length?Math.round(P.reduce(function(a,p){return a+(p.buyPrice>0?(p.sellPrice-p.buyPrice)/p.buyPrice*100:0);},0)/P.length):0;
+  document.getElementById('an-margin').innerText=avgMargin+'%';
+
+  // 7 day revenue
+  var days=[],revs=[];
+  for(var i=6;i>=0;i--){
+    var d=new Date(); d.setDate(d.getDate()-i);
+    var k=d.toISOString().split('T')[0];
+    days.push(d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));
+    revs.push(S.filter(function(s){return s.date===k;}).reduce(function(a,s){return a+s.revenue;},0));
+  }
+  var cfg={responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#b0b0c0',font:{size:10,family:'Manrope'}},grid:{display:false}},y:{ticks:{color:'#b0b0c0',font:{size:10,family:'Manrope'}},grid:{color:'rgba(0,0,0,0.04)'},beginAtZero:true}}};
+  if(revChart)revChart.destroy();
+  revChart=new Chart(document.getElementById('revChart'),{type:'bar',data:{labels:days,datasets:[{data:revs,backgroundColor:'rgba(108,71,255,0.15)',borderColor:'#6c47ff',borderWidth:2,borderRadius:10}]},options:cfg});
+
+  if(topChart)topChart.destroy();
+  topChart=new Chart(document.getElementById('topChart'),{type:'doughnut',data:{labels:top.map(function(p){return p.name;}),datasets:[{data:top.map(function(p){return p.totalSold||0;}),backgroundColor:['#6c47ff','#00c896','#ff6b35','#ff4757','#ffd32a'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{family:'Manrope',size:11},color:'#6b6b80'}}}}});
+}
+
+renderAll();
+</script>
+</body>
+</html>
