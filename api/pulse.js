@@ -3,6 +3,28 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  
-  return res.status(200).json({ test: 'hello', key: process.env.ANTHROPIC_API_KEY ? 'key exists' : 'key missing' });
+
+  try {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const prompt = body && body.prompt ? body.prompt : 'Say hello in JSON: {"test":"works"}';
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const text = await r.text();
+    return res.status(200).send(text);
+  } catch(err) {
+    return res.status(500).json({ error: err.message });
+  }
 }
