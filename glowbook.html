@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>GlowBook</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Dark rich background */
+      --bg:#12100e;--bg2:#1c1814;--surf:#211d19;--surf2:#2a2420;
+      /* Accent - warm gold */
+      --acc:#e8a045;--acc2:#f0b96a;--acc-soft:rgba(232,160,69,0.12);
+      /* Rose/pink for work log */
+      --rose:#e07272;--rose-soft:rgba(224,114,114,0.12);
+      /* Green for success */
+      --grn:#5cb87a;--grn-soft:rgba(92,184,122,0.12);
+      /* Gold for pending */
+      --gold:#f0c040;--gold-soft:rgba(240,192,64,0.12);
+      /* Red for delete */
+      --red:#e05555;--red-soft:rgba(224,85,85,0.12);
+      /* Text */
+      --txt:#f0ebe4;--txt2:#a89880;--txt3:#6a5a4a;
+      /* Borders */
+      --bdr:rgba(255,255,255,0.07);--bdr2:rgba(255,255,255,0.12);
+      /* Shadows */
+      --shadow:0 2px 16px rgba(0,0,0,0.3);--shadow2:0 8px 40px rgba(0,0,0,0.5);
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;min-height:100vh;touch-action:manipulation;}
+
+    /* AUTH */
+    .auth-screen{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background-image:radial-gradient(ellipse at 60% 20%,rgba(232,160,69,0.07) 0%,transparent 60%);}
+    .auth-card{background:var(--surf);border-radius:24px;padding:28px 24px;width:100%;max-width:400px;box-shadow:var(--shadow2);border:1px solid var(--bdr2);}
+    .auth-logo{text-align:center;margin-bottom:24px;}
+    .auth-logo-icon{font-size:48px;margin-bottom:8px;}
+    .auth-logo-text{font-family:'Playfair Display',serif;font-size:32px;color:var(--acc);letter-spacing:-0.5px;}
+    .auth-logo-sub{font-size:12px;color:var(--txt3);margin-top:3px;letter-spacing:0.1em;text-transform:uppercase;}
+    .auth-tab-row{display:flex;background:var(--bg2);border-radius:12px;padding:4px;margin-bottom:20px;gap:4px;}
+    .auth-tab{flex:1;padding:9px;border-radius:9px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--txt3);}
+    .auth-tab.on{background:var(--acc);color:#12100e;box-shadow:0 2px 12px rgba(232,160,69,0.35);}
+    .auth-err{background:var(--red-soft);color:var(--red);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none;font-weight:600;border:1px solid rgba(224,85,85,0.2);}
+    .auth-err.show{display:block;}
+    .auth-suc{background:var(--grn-soft);color:var(--grn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none;font-weight:600;}
+    .auth-suc.show{display:block;}
+
+    /* MODALS */
+    .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:9999;display:none;align-items:flex-end;justify-content:center;}
+    .modal-ov.show{display:flex;}
+    .modal{background:var(--surf);border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:560px;animation:slideUp 0.3s cubic-bezier(0.34,1.36,0.64,1);max-height:92vh;overflow-y:auto;border-top:1px solid var(--bdr2);}
+    @keyframes slideUp{from{transform:translateY(110%)}to{transform:translateY(0)}}
+    .modal-drag{width:40px;height:4px;background:var(--bdr2);border-radius:4px;margin:0 auto 20px;}
+    .modal-title{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:20px;color:var(--acc);}
+
+    /* HEADER */
+    header{background:var(--surf);padding:16px 20px 14px;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--bdr);box-shadow:0 4px 24px rgba(0,0,0,0.4);}
+    .h-top{display:flex;justify-content:space-between;align-items:center;}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-text{font-family:'Playfair Display',serif;font-size:22px;color:var(--acc);letter-spacing:-0.3px;}
+    .logo-sub{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--txt3);margin-top:1px;}
+    .h-btns{display:flex;gap:6px;}
+    .hbtn{background:var(--bg2);border:1px solid var(--bdr2);border-radius:8px;padding:6px 11px;font-size:12px;cursor:pointer;color:var(--txt2);font-weight:600;font-family:'DM Sans',sans-serif;}
+    .h-divider{height:1px;background:var(--bdr);margin:10px 0 8px;}
+    .h-section-label{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--txt3);margin-bottom:6px;}
+    .h-stats{display:flex;gap:8px;margin-top:4px;}
+    .h-stat{flex:1;background:var(--bg2);border-radius:12px;padding:10px 12px;border:1px solid var(--bdr);}
+    .h-stat-val{font-family:'DM Mono',monospace;font-size:17px;color:var(--acc);font-weight:500;line-height:1;}
+    .h-stat-lbl{font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--txt3);margin-top:4px;}
+
+    /* TABS */
+    .tabs{display:flex;background:var(--surf2);border-bottom:1px solid var(--bdr);overflow-x:auto;scrollbar-width:none;position:sticky;top:0;z-index:99;}
+    .tabs::-webkit-scrollbar{display:none;}
+    .tab{padding:14px 16px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--txt3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.2s;}
+    .tab.on{color:var(--acc);border-bottom-color:var(--acc);}
+
+    /* PAGES */
+    .pg{display:none;padding:16px 16px 100px;max-width:560px;margin:0 auto;}
+    .pg.on{display:block;}
+
+    /* FAB */
+    .fab{position:fixed;bottom:24px;right:20px;width:58px;height:58px;background:var(--acc);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;box-shadow:0 4px 24px rgba(232,160,69,0.45);z-index:200;border:none;color:#12100e;font-weight:700;}
+
+    /* SECTION HEADER */
+    .sec{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--txt3);margin:20px 0 10px;display:flex;align-items:center;justify-content:space-between;}
+    .sec-line{flex:1;height:1px;background:var(--bdr);margin-left:10px;}
+
+    /* STAT CARDS */
+    .srow{display:grid;gap:10px;margin-bottom:14px;}
+    .srow.s2{grid-template-columns:1fr 1fr;}
+    .srow.s3{grid-template-columns:1fr 1fr 1fr;}
+    .sc{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:14px;box-shadow:var(--shadow);}
+    .sc-icon{font-size:20px;margin-bottom:8px;}
+    .sc-val{font-family:'DM Mono',monospace;font-size:22px;color:var(--txt);line-height:1;margin-bottom:4px;font-weight:500;}
+    .sc-lbl{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt3);font-weight:600;}
+
+    /* BOOKING CARDS */
+    .bc{background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow);transition:border-color 0.2s;}
+    .bc.bt{border-left:3px solid var(--gold);background:linear-gradient(135deg,rgba(240,192,64,0.04),var(--surf));}
+    .bc.bd{border-left:3px solid var(--grn);opacity:0.7;}
+    .bc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+    .bc-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--txt);line-height:1.1;}
+    .bc-service{font-size:12px;color:var(--txt2);margin-top:4px;font-weight:500;}
+    .bc-total{font-family:'DM Mono',monospace;font-size:22px;color:var(--acc);font-weight:500;}
+    .bc-rem{font-size:11px;color:var(--gold);font-weight:700;margin-top:3px;}
+
+    /* BADGES */
+    .dg{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;margin-right:4px;}
+    .sg{background:var(--grn-soft);color:var(--grn);border:1px solid rgba(92,184,122,0.2);}
+    .sy{background:var(--gold-soft);color:var(--gold);border:1px solid rgba(240,192,64,0.2);}
+    .sr{background:var(--rose-soft);color:var(--rose);border:1px solid rgba(224,114,114,0.2);}
+
+    /* ACTION BUTTONS */
+    .bc-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+    .ab{padding:8px 13px;border-radius:10px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.02em;}
+    .ag{background:var(--grn-soft);color:var(--grn);border:1px solid rgba(92,184,122,0.2);}
+    .ar{background:var(--rose-soft);color:var(--rose);border:1px solid rgba(224,114,114,0.2);}
+    .aa{background:var(--acc-soft);color:var(--acc);border:1px solid rgba(232,160,69,0.2);}
+    .ad{background:var(--red-soft);color:var(--red);border:1px solid rgba(224,85,85,0.2);}
+
+    /* PAYMENT HISTORY */
+    .ph{background:var(--bg2);border-radius:10px;padding:8px 10px;margin-top:8px;border:1px solid var(--bdr);}
+    .pe{display:flex;justify-content:space-between;font-size:12px;color:var(--txt2);padding:4px 0;border-bottom:1px solid var(--bdr);}
+    .pe:last-child{border:none;}
+    .pe b{color:var(--grn);font-family:'DM Mono',monospace;}
+
+    /* PAYMENT LIST ITEMS */
+    .pi{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow);}
+    .pin{font-weight:700;font-size:15px;color:var(--txt);}
+    .pis{font-size:12px;color:var(--txt2);margin-top:3px;}
+    .pia{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;}
+    .pi2{font-size:11px;color:var(--txt3);text-align:right;margin-top:3px;}
+
+    /* REMINDER */
+    .rem-ov{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:8000;display:none;align-items:flex-end;justify-content:center;}
+    .rem-ov.show{display:flex;}
+    .rem-box{background:var(--surf);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:560px;border-top:1px solid var(--bdr2);}
+
+    /* NEXT APPOINTMENT BANNER */
+    .nb{background:linear-gradient(135deg,rgba(240,192,64,0.1),rgba(232,160,69,0.05));border:1px solid rgba(240,192,64,0.2);border-radius:16px;padding:12px 14px;margin-bottom:14px;display:none;}
+    .nb.show{display:block;}
+    .nb-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+
+    /* FORM FIELDS */
+    .fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+    .fg label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt3);font-weight:700;}
+    .fg input,.fg select,.fg textarea{background:var(--bg2);border:1px solid var(--bdr2);border-radius:10px;padding:12px 14px;color:var(--txt);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;transition:border-color 0.2s;}
+    .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc);background:var(--surf);}
+    .fg select option{background:var(--surf2);color:var(--txt);}
+    .fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+    /* BUTTONS */
+    .btnp{width:100%;padding:15px;background:var(--acc);color:#12100e;border:none;border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:700;cursor:pointer;margin-top:4px;letter-spacing:0.02em;}
+    .btnp:active{opacity:0.85;}
+    .btnc{width:100%;padding:14px;background:transparent;color:var(--txt2);border:1px solid var(--bdr2);border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;margin-top:8px;}
+    .pay-row{display:flex;gap:8px;margin-bottom:14px;}
+    .pay-btn{flex:1;padding:11px;border-radius:10px;border:1px solid var(--bdr2);background:transparent;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--txt2);}
+    .pay-btn.on{background:var(--grn-soft);border-color:var(--grn);color:var(--grn);}
+    .pay-btn.on-upi{background:var(--acc-soft);border-color:var(--acc);color:var(--acc);}
+
+    /* INVOICE */
+    .inv-wrap{border:1px solid var(--bdr2);border-radius:14px;overflow:hidden;margin-bottom:14px;}
+    .inv-inner{padding:20px;background:#fff;color:#000;font-family:'DM Sans',sans-serif;}
+    .inv-shop{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:2px;}
+    .inv-sub{font-size:11px;color:#888;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid #000;}
+    .inv-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:13px;}
+    .inv-row.hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#999;}
+    .inv-total-row{display:flex;justify-content:space-between;padding:10px 0 0;margin-top:4px;border-top:2px solid #000;font-size:18px;font-weight:700;font-family:'Playfair Display',serif;}
+    .inv-footer{margin-top:14px;text-align:center;font-size:11px;color:#bbb;border-top:1px solid #eee;padding-top:10px;}
+
+    /* CHARTS */
+    .chart-card{background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);}
+    .chart-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--acc);margin-bottom:14px;}
+
+    /* EMPTY STATE */
+    .emp{text-align:center;color:var(--txt3);padding:40px 0;font-size:13px;}
+    .emp-icon{font-size:40px;display:block;margin-bottom:10px;}
+
+    /* GROUP APPOINTMENT */
+    .group-toggle{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:10px;padding:12px 14px;margin-bottom:14px;cursor:pointer;}
+    .group-toggle input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc);cursor:pointer;}
+    .group-toggle-label{font-size:13px;font-weight:600;color:var(--txt2);}
+    .group-section{display:none;}
+    .group-section.show{display:block;}
+    .person-row{background:var(--bg2);border:1px solid var(--bdr2);border-radius:12px;padding:12px;margin-bottom:8px;position:relative;}
+    .person-row-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc);margin-bottom:8px;}
+    .person-remove{position:absolute;top:10px;right:10px;background:var(--red-soft);color:var(--red);border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+    .add-person-btn{width:100%;padding:10px;background:var(--acc-soft);color:var(--acc);border:1px dashed rgba(232,160,69,0.4);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:14px;}
+
+    /* HELPER PAY */
+    .helper-section{background:rgba(224,114,114,0.05);border:1px solid rgba(224,114,114,0.15);border-radius:14px;padding:14px;margin-top:14px;}
+    .helper-section-title{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--rose);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .helper-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;}
+    .helper-row .fg{flex:1;margin:0;}
+    .helper-remove{background:var(--red-soft);color:var(--red);border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;flex-shrink:0;align-self:flex-end;}
+    .add-helper-btn{width:100%;padding:9px;background:rgba(224,114,114,0.08);color:var(--rose);border:1px dashed rgba(224,114,114,0.3);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;}
+
+    /* PROFIT BAR */
+    .profit-bar{background:var(--bg2);border-radius:10px;padding:10px 12px;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border:1px solid var(--bdr);}
+    .profit-item{font-size:11px;color:var(--txt3);}
+    .profit-item b{display:block;font-family:'DM Mono',monospace;font-size:15px;color:var(--txt);margin-top:2px;}
+    .profit-item.profit b{color:var(--grn);}
+    .profit-item.expense b{color:var(--rose);}
+
+    /* GROUP BADGES */
+    .group-badge{display:inline-flex;align-items:center;background:var(--acc-soft);color:var(--acc);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;margin-right:4px;margin-top:4px;border:1px solid rgba(232,160,69,0.15);}
+
+    @media print{header,.tabs,.fab,button{display:none !important;}.modal-ov{position:static !important;background:none !important;}.modal{border-radius:0 !important;padding:0 !important;}body{background:#fff !important;color:#000 !important;}}
+  </style>
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{background:var(--bg);color:var(--txt);font-family:'Outfit',sans-serif;min-height:100vh;touch-action:manipulation;}
+    .auth-screen{position:fixed;inset:0;background:var(--bg);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+    .auth-card{background:var(--surf);border-radius:24px;padding:28px 24px;width:100%;max-width:400px;box-shadow:var(--shadow2);border:1px solid var(--bdr);}
+    .auth-logo{text-align:center;margin-bottom:24px;}
+    .auth-logo-icon{font-size:48px;margin-bottom:8px;}
+    .auth-logo-text{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--acc);}
+    .auth-logo-sub{font-size:12px;color:var(--txt3);margin-top:3px;}
+    .auth-tab-row{display:flex;background:var(--bg2);border-radius:12px;padding:4px;margin-bottom:20px;gap:4px;}
+    .auth-tab{flex:1;padding:9px;border-radius:9px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--txt3);}
+    .auth-tab.on{background:var(--surf);color:var(--acc);box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+    .auth-err{background:var(--red-soft);color:var(--red);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none;font-weight:600;}
+    .auth-err.show{display:block;}
+    .auth-suc{background:var(--grn-soft);color:var(--grn);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none;font-weight:600;}
+    .auth-suc.show{display:block;}
+    .modal-ov{position:fixed;inset:0;background:rgba(44,24,16,0.5);backdrop-filter:blur(6px);z-index:9999;display:none;align-items:flex-end;justify-content:center;}
+    .modal-ov.show{display:flex;}
+    .modal{background:var(--surf);border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:560px;animation:slideUp 0.3s cubic-bezier(0.34,1.36,0.64,1);max-height:92vh;overflow-y:auto;}
+    @keyframes slideUp{from{transform:translateY(110%)}to{transform:translateY(0)}}
+    .modal-drag{width:40px;height:4px;background:var(--bdr2);border-radius:4px;margin:0 auto 20px;}
+    .modal-title{font-family:'Cormorant Garamond',serif;font-size:26px;margin-bottom:20px;color:var(--acc);}
+    header{background:var(--acc);padding:16px 20px 14px;position:sticky;top:0;z-index:100;}
+    .h-top{display:flex;justify-content:space-between;align-items:center;}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-text{font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;}
+    .logo-sub{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:1px;}
+    .h-btns{display:flex;gap:6px;}
+    .hbtn{background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:6px 11px;font-size:12px;cursor:pointer;color:#fff;font-weight:600;font-family:'Outfit',sans-serif;}
+    .h-stats{display:flex;gap:8px;margin-top:14px;}
+    .h-stat{flex:1;background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 12px;}
+    .h-stat-val{font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;font-weight:600;}
+    .h-stat-lbl{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-top:1px;}
+    .tabs{display:flex;background:var(--surf);border-bottom:1px solid var(--bdr);overflow-x:auto;scrollbar-width:none;position:sticky;top:0;z-index:99;}
+    .tabs::-webkit-scrollbar{display:none;}
+    .tab{padding:13px 16px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--txt3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+    .tab.on{color:var(--acc);border-bottom-color:var(--acc);}
+    .pg{display:none;padding:16px 16px 100px;max-width:560px;margin:0 auto;}
+    .pg.on{display:block;}
+    .fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;background:var(--acc);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(139,94,60,0.35);z-index:200;border:none;color:#fff;}
+    .sec{font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--txt3);margin:20px 0 10px;display:flex;align-items:center;justify-content:space-between;}
+    .sec-line{flex:1;height:1px;background:var(--bdr);margin-left:10px;}
+    .srow{display:grid;gap:10px;margin-bottom:14px;}
+    .srow.s2{grid-template-columns:1fr 1fr;}
+    .srow.s3{grid-template-columns:1fr 1fr 1fr;}
+    .sc{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:14px;box-shadow:var(--shadow);}
+    .sc-icon{font-size:20px;margin-bottom:6px;}
+    .sc-val{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--txt);line-height:1;margin-bottom:3px;}
+    .sc-lbl{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt3);font-weight:600;}
+    .bc{background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow);}
+    .bc.bt{border-left:3px solid var(--gold);}
+    .bc.bd{border-left:3px solid var(--grn);opacity:0.75;}
+    .bc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+    .bc-name{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--txt);}
+    .bc-service{font-size:12px;color:var(--txt2);margin-top:2px;}
+    .bc-total{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--acc);}
+    .bc-rem{font-size:11px;color:var(--gold);font-weight:600;}
+    .dg{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;margin-right:4px;}
+    .sg{background:var(--grn-soft);color:var(--grn);}
+    .sy{background:var(--gold-soft);color:var(--gold);}
+    .sr{background:var(--rose-soft);color:var(--rose);}
+    .bc-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+    .ab{padding:8px 12px;border-radius:10px;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;}
+    .ag{background:var(--grn-soft);color:var(--grn);}
+    .ar{background:var(--rose-soft);color:var(--rose);}
+    .aa{background:var(--acc-soft);color:var(--acc);}
+    .ad{background:var(--red-soft);color:var(--red);}
+    .ph{background:var(--bg2);border-radius:10px;padding:8px 10px;margin-top:8px;}
+    .pe{display:flex;justify-content:space-between;font-size:12px;color:var(--txt2);padding:3px 0;border-bottom:1px solid var(--bdr);}
+    .pe:last-child{border:none;}
+    .pi{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow);}
+    .pin{font-weight:600;font-size:14px;}
+    .pis{font-size:12px;color:var(--txt2);margin-top:2px;}
+    .pia{font-family:'Cormorant Garamond',serif;font-size:20px;}
+    .pi2{font-size:11px;color:var(--txt3);text-align:right;}
+    .rem-ov{position:fixed;inset:0;background:rgba(44,24,16,0.5);z-index:8000;display:none;align-items:flex-end;justify-content:center;}
+    .rem-ov.show{display:flex;}
+    .rem-box{background:var(--surf);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:560px;}
+    .nb{background:linear-gradient(135deg,var(--gold-soft),var(--bg));border:1px solid rgba(183,121,31,0.25);border-radius:16px;padding:12px 14px;margin-bottom:14px;display:none;}
+    .nb.show{display:block;}
+    .nb-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+    .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+    .fg label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--txt3);font-weight:600;}
+    .fg input,.fg select,.fg textarea{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:11px 13px;color:var(--txt);font-size:14px;font-family:'Outfit',sans-serif;outline:none;width:100%;}
+    .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc2);background:var(--surf);}
+    .fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .btnp{width:100%;padding:14px;background:var(--acc);color:#fff;border:none;border-radius:12px;font-size:15px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;margin-top:4px;}
+    .btnp:active{opacity:0.85;}
+    .btnc{width:100%;padding:14px;background:var(--surf2);color:var(--txt2);border:1px solid var(--bdr2);border-radius:12px;font-size:15px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;margin-top:8px;}
+    .pay-row{display:flex;gap:8px;margin-bottom:14px;}
+    .pay-btn{flex:1;padding:10px;border-radius:10px;border:2px solid var(--bdr2);background:transparent;font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;color:var(--txt2);}
+    .pay-btn.on{background:var(--grn-soft);border-color:var(--grn);color:var(--grn);}
+    .pay-btn.on-upi{background:var(--acc-soft);border-color:var(--acc);color:var(--acc);}
+    .inv-wrap{border:1px solid var(--bdr2);border-radius:14px;overflow:hidden;margin-bottom:14px;}
+    .inv-inner{padding:20px;background:#fff;color:#000;font-family:'Outfit',sans-serif;}
+    .inv-shop{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin-bottom:2px;}
+    .inv-sub{font-size:11px;color:#888;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid #000;}
+    .inv-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:13px;}
+    .inv-row.hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#999;}
+    .inv-total-row{display:flex;justify-content:space-between;padding:10px 0 0;margin-top:4px;border-top:2px solid #000;font-size:18px;font-weight:700;font-family:'Cormorant Garamond',serif;}
+    .inv-footer{margin-top:14px;text-align:center;font-size:11px;color:#bbb;border-top:1px solid #eee;padding-top:10px;}
+    .chart-card{background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);}
+    .chart-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--acc);margin-bottom:14px;}
+    .emp{text-align:center;color:var(--txt3);padding:32px 0;font-size:13px;}
+    .emp-icon{font-size:36px;display:block;margin-bottom:8px;}
+
+    /* Group appointment styles */
+    .group-toggle{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:10px 13px;margin-bottom:14px;cursor:pointer;}
+    .group-toggle input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc);cursor:pointer;}
+    .group-toggle-label{font-size:13px;font-weight:600;color:var(--txt2);}
+    .group-section{display:none;}
+    .group-section.show{display:block;}
+    .person-row{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:12px;margin-bottom:8px;position:relative;}
+    .person-row-title{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc);margin-bottom:8px;}
+    .person-remove{position:absolute;top:10px;right:10px;background:var(--red-soft);color:var(--red);border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;}
+    .add-person-btn{width:100%;padding:10px;background:var(--acc-soft);color:var(--acc);border:1px dashed var(--acc2);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:14px;}
+
+    /* Helper pay styles */
+    .helper-section{background:var(--rose-soft);border:1px solid rgba(192,113,107,0.2);border-radius:14px;padding:14px;margin-top:14px;}
+    .helper-section-title{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--rose);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .helper-row{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;}
+    .helper-row .fg{flex:1;margin:0;}
+    .helper-remove{background:var(--red-soft);color:var(--red);border:none;border-radius:8px;padding:10px 10px;font-size:14px;cursor:pointer;flex-shrink:0;align-self:flex-end;}
+    .add-helper-btn{width:100%;padding:9px;background:rgba(192,113,107,0.1);color:var(--rose);border:1px dashed var(--rose);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px;}
+
+    /* Profit summary on card */
+    .profit-bar{background:var(--bg2);border-radius:10px;padding:10px 12px;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+    .profit-item{font-size:11px;color:var(--txt2);}
+    .profit-item b{display:block;font-family:'Cormorant Garamond',serif;font-size:16px;}
+    .profit-item.profit b{color:var(--grn);}
+    .profit-item.expense b{color:var(--rose);}
+
+    /* Group people badges on card */
+    .group-badge{display:inline-flex;align-items:center;gap:4px;background:var(--acc-soft);color:var(--acc);font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-right:4px;margin-top:4px;}
+
+    @media print{header,.tabs,.fab,button{display:none !important;}.modal-ov{position:static !important;background:none !important;}.modal{border-radius:0 !important;padding:0 !important;}body{background:#fff !important;}}
+  </style>
+</head>
+<body>
+
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🌸</div>
+      <div class="auth-logo-text">GlowBook</div>
+      <div class="auth-logo-sub">Beauty Parlour Manager</div>
+    </div>
+    <div class="auth-tab-row">
+      <button class="auth-tab on" onclick="switchAuthTab('login',this)">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup',this)">Sign Up</button>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-suc" id="authSuc"></div>
+    <div class="fg"><label>Email</label><input id="authEmail" type="email" placeholder="you@example.com"/></div>
+    <div class="fg"><label>Password</label><input id="authPass" type="password" placeholder="Min 6 characters"/></div>
+    <div class="fg" id="signupParlourField" style="display:none;"><label>Parlour Name</label><input id="authParlour" type="text" placeholder="e.g. Priya Beauty Parlour"/></div>
+    <button class="btnp" id="authBtn" onclick="handleAuth()">Login</button>
+    <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--txt3);">Your data is private & secure 🔒</div>
+  </div>
+</div>
+
+<div class="modal-ov" id="bookModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="bookModalTitle">New Appointment</div>
+    <input type="hidden" id="editBookId">
+
+    <div class="fg"><label>Booking Person (Client Name)</label><input id="fn" type="text" placeholder="e.g. Sonia Sharma (who booked)"/></div>
+
+    <!-- Group toggle -->
+    <label class="group-toggle">
+      <input type="checkbox" id="groupToggle" onchange="toggleGroupSection()">
+      <span class="group-toggle-label">👥 Group Appointment (multiple people)</span>
+    </label>
+
+    <!-- Single person service (shown when NOT group) -->
+    <div id="singleSection">
+      <div class="fg"><label>Service</label>
+        <select id="fs"></select>
+      </div>
+    </div>
+
+    <!-- Group people section -->
+    <div class="group-section" id="groupSection">
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Add each person and their service. The booking person above is Person 1.</div>
+      <div id="personsList"></div>
+      <button class="add-person-btn" onclick="addPersonRow()">+ Add Another Person</button>
+    </div>
+
+    <div class="fg2">
+      <div class="fg"><label>Date</label><input id="fd" type="date"/></div>
+      <div class="fg"><label>Time</label><input id="ft" type="time"/></div>
+    </div>
+    <div class="fg2">
+      <div class="fg"><label>Total Amount (₹)</label><input id="fa" type="number" placeholder="500"/></div>
+      <div class="fg"><label>Advance Paid (₹)</label><input id="fad" type="number" placeholder="0"/></div>
+    </div>
+    <div class="fg"><label>Notes</label><textarea id="fno" rows="2" placeholder="Optional notes..."></textarea></div>
+
+    <!-- Helper Pay Section -->
+    <div class="helper-section">
+      <div class="helper-section-title">👩‍🎨 Helpers & Expenses</div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px;">Add helpers you hired and their pay. Also add travel or other expenses.</div>
+      <div id="helpersList"></div>
+      <button class="add-helper-btn" onclick="addHelperRow()">+ Add Helper / Expense</button>
+    </div>
+
+    <button class="btnp" style="margin-top:16px;" onclick="saveBooking()">Save Appointment</button>
+    <button class="btnc" onclick="closeModal('bookModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-ov" id="payModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">Add Payment</div>
+    <input type="hidden" id="payBookId">
+    <div id="payInfo" style="background:var(--bg2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--txt2);"></div>
+    <div class="fg"><label>Amount (₹)</label><input id="payAmt" type="number" placeholder="Enter amount"/></div>
+    <div class="fg"><label>Note</label><input id="payNote" type="text" placeholder="e.g. Final payment"/></div>
+    <div class="pay-row">
+      <button class="pay-btn on" id="payCash" onclick="setPayMode('cash')">💵 Cash</button>
+      <button class="pay-btn" id="payUpi" onclick="setPayMode('upi')">📱 UPI</button>
+    </div>
+    <button class="btnp" onclick="savePayment()">Save Payment</button>
+    <button class="btnc" onclick="closeModal('payModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-ov" id="invModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">Invoice</div>
+    <div class="inv-wrap"><div class="inv-inner" id="invInner"></div></div>
+    <button class="btnp" onclick="copyInvoice()">📋 Copy for WhatsApp</button>
+    <button class="btnp" style="background:var(--grn);margin-top:8px;" onclick="window.print()">🖨️ Print / Save PDF</button>
+    <button class="btnc" onclick="closeModal('invModal')">Close</button>
+  </div>
+</div>
+
+<div class="modal-ov" id="settModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">Parlour Settings</div>
+    <div class="fg"><label>Parlour Name</label><input id="sName" type="text"/></div>
+    <div class="fg"><label>Owner Name</label><input id="sOwner" type="text"/></div>
+    <div class="fg"><label>Phone</label><input id="sPhone" type="tel"/></div>
+    <div class="fg"><label>Address</label><input id="sAddr" type="text"/></div>
+    <button class="btnp" onclick="saveSettings()">Save</button>
+    <button class="btnc" onclick="closeModal('settModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="rem-ov" id="remOv">
+  <div class="rem-box">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--acc);margin-bottom:6px;">Upcoming Appointment</div>
+    <div id="remBody" style="font-size:14px;color:var(--txt2);margin-bottom:16px;"></div>
+    <button class="btnp" onclick="closeModal('remOv')">Got it</button>
+  </div>
+</div>
+
+<header>
+  <div class="h-top">
+    <div class="logo">
+      <div>
+        <div class="logo-text">🌸 GlowBook</div>
+        <div class="logo-sub">Beauty Manager</div>
+      </div>
+    </div>
+    <div class="h-btns">
+      <button class="hbtn" onclick="openSettings()">⚙️</button>
+      <button class="hbtn" onclick="logOut()">Logout</button>
+    </div>
+  </div>
+  <div class="h-divider"></div>
+  <div class="h-section-label">🌸 Parlour</div>
+  <div class="h-stats">
+    <div class="h-stat"><div class="h-stat-val" id="hToday">₹0</div><div class="h-stat-lbl">Today</div></div>
+    <div class="h-stat"><div class="h-stat-val" id="hMonth">₹0</div><div class="h-stat-lbl">This Month</div></div>
+    <div class="h-stat"><div class="h-stat-val" id="hPending">₹0</div><div class="h-stat-lbl">Pending</div></div>
+  </div>
+  <div style="height:1px;background:var(--bdr);margin:8px 0;"></div>
+  <div class="h-section-label">💼 My Work Log</div>
+  <div class="h-stats">
+    <div class="h-stat"><div class="h-stat-val" id="hWlJobs">0</div><div class="h-stat-lbl">Jobs Done</div></div>
+    <div class="h-stat"><div class="h-stat-val" id="hWlEarned">₹0</div><div class="h-stat-lbl">WL Earned</div></div>
+    <div class="h-stat"><div class="h-stat-val" id="hWlNet">₹0</div><div class="h-stat-lbl">WL Net</div></div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab on" onclick="showTab('today',this)">Today</div>
+  <div class="tab" onclick="showTab('upcoming',this)">Upcoming</div>
+  <div class="tab" onclick="showTab('payments',this)">Payments</div>
+  <div class="tab" onclick="showTab('history',this)">History</div>
+  <div class="tab" onclick="showTab('worklog',this)">💼 Work Log</div>
+  <div class="tab" onclick="showTab('analytics',this)">Analytics</div>
+  <div class="tab" onclick="showTab('summary',this)">📊 Summary</div>
+</div>
+
+<div class="pg on" id="pg-today">
+  <div class="nb" id="nb"><div class="nb-title">Next Appointment</div><div id="nbMain"></div></div>
+  <div class="sec">Today's Appointments <div class="sec-line"></div></div>
+  <div id="dt"></div>
+</div>
+
+<div class="pg" id="pg-upcoming">
+  <div class="sec" style="margin-top:4px;">Upcoming <div class="sec-line"></div></div>
+  <div id="up"></div>
+</div>
+
+<div class="pg" id="pg-payments">
+  <div class="srow s2" style="margin-top:4px;">
+    <div class="sc"><div class="sc-icon">⏳</div><div class="sc-val" id="pPending" style="color:var(--gold)">₹0</div><div class="sc-lbl">Pending</div></div>
+    <div class="sc"><div class="sc-icon">✅</div><div class="sc-val" id="pDone" style="color:var(--grn)">₹0</div><div class="sc-lbl">Collected</div></div>
+  </div>
+  <div class="sec">Pending Payments <span style="font-size:10px;color:var(--txt3);font-weight:400;text-transform:none;letter-spacing:0;">tap to collect</span><div class="sec-line"></div></div>
+  <div id="pp"></div>
+  <div class="sec">Completed <div class="sec-line"></div></div>
+  <div id="pd"></div>
+</div>
+
+<div class="pg" id="pg-history">
+  <div style="display:flex;gap:8px;margin:4px 0 14px;">
+    <input type="date" id="histDate" onchange="renderHistory()" style="flex:1;background:var(--surf);border:1px solid var(--bdr2);border-radius:10px;padding:10px 12px;font-size:14px;font-family:'Outfit',sans-serif;outline:none;color:var(--txt);">
+    <button onclick="document.getElementById('histDate').value='';renderHistory();" style="background:var(--surf);border:1px solid var(--bdr2);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--txt2);font-family:'Outfit',sans-serif;">All</button>
+  </div>
+  <div id="hist"></div>
+</div>
+
+<div class="pg" id="pg-analytics">
+
+  <!-- PARLOUR ANALYTICS -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc);margin:4px 0 12px;display:flex;align-items:center;gap:10px;">🌸 Parlour <div style="flex:1;height:1px;background:var(--bdr);"></div></div>
+  <div class="srow s3">
+    <div class="sc"><div class="sc-icon">🧾</div><div class="sc-val" id="aTot">0</div><div class="sc-lbl">Bookings</div></div>
+    <div class="sc"><div class="sc-icon">💰</div><div class="sc-val" id="aRev">₹0</div><div class="sc-lbl">Revenue</div></div>
+    <div class="sc"><div class="sc-icon">⭐</div><div class="sc-val" id="aBest" style="font-size:13px;line-height:1.3;">—</div><div class="sc-lbl">Top Service</div></div>
+  </div>
+  <div class="srow s2">
+    <div class="sc"><div class="sc-icon">💵</div><div class="sc-val" id="aCash">₹0</div><div class="sc-lbl">Cash</div></div>
+    <div class="sc"><div class="sc-icon">📱</div><div class="sc-val" id="aUpi">₹0</div><div class="sc-lbl">UPI</div></div>
+  </div>
+  <div class="chart-card"><div class="chart-title">Revenue Last 7 Days</div><canvas id="revChart"></canvas></div>
+  <div class="chart-card"><div class="chart-title">Services Breakdown</div><canvas id="svcChart"></canvas></div>
+
+  <!-- WORK LOG ANALYTICS -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--rose);margin:20px 0 12px;display:flex;align-items:center;gap:10px;">💼 My Work Log <div style="flex:1;height:1px;background:var(--bdr);"></div></div>
+  <div class="srow s3">
+    <div class="sc"><div class="sc-icon">💼</div><div class="sc-val" id="aWlJobs">0</div><div class="sc-lbl">Jobs Done</div></div>
+    <div class="sc"><div class="sc-icon">💰</div><div class="sc-val" id="aWlEarned">₹0</div><div class="sc-lbl">Total Earned</div></div>
+    <div class="sc"><div class="sc-icon">✨</div><div class="sc-val" id="aWlNet">₹0</div><div class="sc-lbl">Net Income</div></div>
+  </div>
+  <div class="srow s2">
+    <div class="sc"><div class="sc-icon">🚗</div><div class="sc-val" id="aWlTravelPaid">₹0</div><div class="sc-lbl">Travel Paid</div></div>
+    <div class="sc"><div class="sc-icon">🎁</div><div class="sc-val" id="aWlTravelRecv">₹0</div><div class="sc-lbl">Travel Received</div></div>
+  </div>
+  <div class="chart-card"><div class="chart-title">Work Log Earnings (Last 7 Days)</div><canvas id="wlChart"></canvas></div>
+
+</div>
+
+<!-- SUMMARY PAGE -->
+<div class="pg" id="pg-summary">
+
+  <!-- THIS MONTH -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc);margin:4px 0 12px;display:flex;align-items:center;gap:10px;">📅 This Month <div style="flex:1;height:1px;background:var(--bdr);"></div></div>
+
+  <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow);">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc);margin-bottom:12px;">🌸 Parlour</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Total Billed</span><span id="smParTotal">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Collected</span><span id="smParCollected" style="color:var(--grn)">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Helper & Expenses</span><span id="smParExp" style="color:var(--rose)">−₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:8px 0 0;"><span>Parlour Net</span><span id="smParNet" style="color:var(--acc)">₹0</span></div>
+  </div>
+
+  <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow);">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--rose);margin-bottom:12px;">💼 Work Log</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Jobs Done</span><span id="smWlJobs">0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Earned</span><span id="smWlEarned" style="color:var(--grn)">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Travel Paid</span><span id="smWlTravel" style="color:var(--rose)">−₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Travel Received</span><span id="smWlTravelRecv" style="color:var(--grn)">+₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:8px 0 0;"><span>Work Log Net</span><span id="smWlNet" style="color:var(--rose)">₹0</span></div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:18px;padding:18px;margin-bottom:20px;color:#fff;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;opacity:0.75;margin-bottom:10px;">This Month — Grand Total</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;opacity:0.85;padding:4px 0;"><span>Parlour Net</span><span id="smGrandParM">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;opacity:0.85;padding:4px 0 10px;"><span>Work Log Net</span><span id="smGrandWlM">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:600;border-top:1px solid rgba(255,255,255,0.3);padding-top:10px;"><span>Overall Net</span><span id="smGrandTotalM">₹0</span></div>
+  </div>
+
+  <!-- ALL TIME -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--acc);margin:4px 0 12px;display:flex;align-items:center;gap:10px;">🗂️ All Time <div style="flex:1;height:1px;background:var(--bdr);"></div></div>
+
+  <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow);">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc);margin-bottom:12px;">🌸 Parlour</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Total Billed</span><span id="saParTotal">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Collected</span><span id="saParCollected" style="color:var(--grn)">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Helper & Expenses</span><span id="saParExp" style="color:var(--rose)">−₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:8px 0 0;"><span>Parlour Net</span><span id="saParNet" style="color:var(--acc)">₹0</span></div>
+  </div>
+
+  <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:18px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow);">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--rose);margin-bottom:12px;">💼 Work Log</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Jobs Done</span><span id="saWlJobs">0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Earned</span><span id="saWlEarned" style="color:var(--grn)">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Travel Paid</span><span id="saWlTravel" style="color:var(--rose)">−₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);padding:5px 0;border-bottom:1px solid var(--bdr);"><span>Travel Received</span><span id="saWlTravelRecv" style="color:var(--grn)">+₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:8px 0 0;"><span>Work Log Net</span><span id="saWlNet" style="color:var(--rose)">₹0</span></div>
+  </div>
+
+  <div style="background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:18px;padding:18px;margin-bottom:30px;color:#fff;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;opacity:0.75;margin-bottom:10px;">All Time — Grand Total</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;opacity:0.85;padding:4px 0;"><span>Parlour Net</span><span id="saGrandPar">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;opacity:0.85;padding:4px 0 10px;"><span>Work Log Net</span><span id="saGrandWl">₹0</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:22px;font-family:'Cormorant Garamond',serif;font-weight:600;border-top:1px solid rgba(255,255,255,0.3);padding-top:10px;"><span>Overall Net</span><span id="saGrandTotal">₹0</span></div>
+  </div>
+
+</div>
+
+<!-- WORK LOG PAGE -->
+<div class="pg" id="pg-worklog">
+  <div class="srow s3" style="margin-top:4px;">
+    <div class="sc"><div class="sc-icon">💼</div><div class="sc-val" id="wlJobs">0</div><div class="sc-lbl">Jobs Done</div></div>
+    <div class="sc"><div class="sc-icon">💰</div><div class="sc-val" id="wlEarned">₹0</div><div class="sc-lbl">Total Earned</div></div>
+    <div class="sc"><div class="sc-icon">✨</div><div class="sc-val" id="wlNet">₹0</div><div class="sc-lbl">Net Income</div></div>
+  </div>
+  <div class="sec">Work Entries <div class="sec-line"></div></div>
+  <div id="wlList"></div>
+</div>
+
+<!-- WORK LOG MODAL -->
+<div class="modal-ov" id="worklogModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title" id="wlModalTitle">New Work Entry</div>
+    <input type="hidden" id="wlEditId">
+
+    <div class="fg2">
+      <div class="fg"><label>Date</label><input id="wlDate" type="date"/></div>
+      <div class="fg"><label>Went With (Name)</label><input id="wlWith" type="text" placeholder="e.g. Sunita tai"/></div>
+    </div>
+
+    <div class="fg2">
+      <div class="fg"><label>No. of Clients</label><input id="wlClients" type="number" placeholder="4" min="1"/></div>
+      <div class="fg"><label>Total to Receive (₹)</label><input id="wlEarnedAmt" type="number" placeholder="2000" oninput="calcWlNet()"/></div>
+    </div>
+
+    <div class="fg2">
+      <div class="fg"><label>Advance Received (₹)</label><input id="wlAdvance" type="number" placeholder="0" oninput="calcWlNet()"/></div>
+      <div class="fg" style="justify-content:flex-end;padding-top:20px;">
+        <div style="font-size:11px;color:var(--txt3);">Rest collected later via + Pay</div>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>Services Done</label>
+      <select id="wlServicePicker" onchange="addWlService(this.value);this.value='';" style="background:var(--bg2);border:1px solid var(--bdr2);border-radius:10px;padding:12px 14px;color:var(--txt);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;">
+        <option value="">— Select a service to add —</option>
+      </select>
+      <div id="wlServiceChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;min-height:10px;"></div>
+      <input type="hidden" id="wlServices"/>
+    </div>
+
+    <div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--acc);margin-bottom:10px;">🚗 Travel Expenses</div>
+      <div class="fg2">
+        <div class="fg"><label>You Paid (₹)</label><input id="wlTravelPaid" type="number" placeholder="150" oninput="calcWlNet()"/></div>
+        <div class="fg"><label>You Received (₹)</label><input id="wlTravelRecv" type="number" placeholder="200" oninput="calcWlNet()"/></div>
+      </div>
+      <div style="font-size:12px;color:var(--txt3);margin-top:2px;">Travel you paid vs travel reimbursement received</div>
+    </div>
+
+    <div style="background:var(--grn-soft);border:1px solid rgba(74,124,89,0.2);border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--grn);margin-bottom:6px;">Net Income Preview</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);margin-bottom:4px;">
+        <span>Total to Receive</span><span id="wlPreviewEarned">₹0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);margin-bottom:4px;">
+        <span>+ Travel Received</span><span id="wlPreviewRecv" style="color:var(--grn)">+₹0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--txt2);margin-bottom:8px;">
+        <span>− Travel Paid</span><span id="wlPreviewPaid" style="color:var(--rose)">−₹0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1px solid rgba(74,124,89,0.2);padding-top:8px;">
+        <span style="color:var(--grn)">Net Income</span><span id="wlPreviewNet" style="color:var(--grn)">₹0</span>
+      </div>
+    </div>
+
+    <div class="fg"><label>Notes</label><textarea id="wlNotes" rows="2" placeholder="Any extra notes..."></textarea></div>
+    <button class="btnp" onclick="saveWorkLog()">Save Entry</button>
+    <button class="btnc" onclick="closeModal('worklogModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- WORK LOG PAYMENT MODAL -->
+<div class="modal-ov" id="wlPayModal">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-title">Collect Payment</div>
+    <input type="hidden" id="wlPayId">
+    <div id="wlPayInfo" style="background:var(--bg2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--txt2);"></div>
+    <div class="fg"><label>Amount (₹)</label><input id="wlPayAmt" type="number" placeholder="Enter amount"/></div>
+    <div class="fg"><label>Note</label><input id="wlPayNote" type="text" placeholder="e.g. Final payment"/></div>
+    <div class="pay-row">
+      <button class="pay-btn on" id="wlPayCash" onclick="setWlPayMode('cash')">💵 Cash</button>
+      <button class="pay-btn" id="wlPayUpi" onclick="setWlPayMode('upi')">📱 UPI</button>
+    </div>
+    <button class="btnp" onclick="saveWlPayment()">Save Payment</button>
+    <button class="btnc" onclick="closeModal('wlPayModal')">Cancel</button>
+  </div>
+</div>
+
+<button class="fab" id="mainFab" onclick="fabClick()">+</button>
+
+<script>
+const SB = supabase.createClient('https://msjofqujmcscmfidrrcf.supabase.co','sb_publishable_sL9AGX3XwC7aO5Zs3vxr1g_ce8BS3_b');
+var CURRENT_USER=null, B=[], SETT={name:'My Parlour',owner:'',phone:'',addr:''};
+var _td=new Date(); var TODAY=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');
+var currentPayMode='cash', revChart, svcChart, dismissedRem=[];
+var SERVICES=[
+  // Makeup
+  'Bridal Makeup','Party Makeup','Sider Makeup','Engagement Makeup','Reception Makeup','Cocktail Makeup','Maternity Shoot Makeup','Photoshoot Makeup',
+  // Hair
+  'Haircut','Hair Style','Bridal Hair Style','Sider Hair Style','Hair Colour','Root Touch-Up','Global Colour','Highlights','Balayage','Keratin Treatment','Hair Smoothening','Hair Spa','Dandruff Treatment','Hair Straightening','Hair Curling','Blow Dry','Head Massage',
+  // Skin & Face
+  'Facial','Cleanup','Bleach','D-Tan','Detan Face + Neck','Whitening Facial','Gold Facial','Diamond Facial','Fruit Facial','Pigmentation Treatment',
+  // Waxing & Threading
+  'Waxing','Full Body Wax','Half Leg Wax','Full Leg Wax','Underarm Wax','Bikini Wax','Threading','Eyebrow Threading','Upper Lip Threading','Full Face Threading',
+  // Nails
+  'Manicure','Pedicure','Gel Nails','Nail Art','Nail Extension','Nail Removal',
+  // Mehndi
+  'Mehndi','Bridal Mehndi','Variety Mehndi','Arabic Mehndi','Feet Mehndi',
+  // Body
+  'Saree Draping','Body Polishing','Body Waxing','Body Bleach','Detan Full Body',
+  // Eyebrows & Lashes
+  'Eyebrow Tinting','Eyebrow Shaping','Eyelash Extension','Lash Lift','Eyebrow Lamination',
+  // Other
+  'Pre-Bridal Package','Groom Makeup','Other'
+];
+
+function populateSelects(){
+  // Appointment main service
+  var fs=document.getElementById('fs');
+  if(fs){ fs.innerHTML=SERVICES.map(function(s){return '<option>'+s+'</option>';}).join(''); }
+  // Work log service picker
+  var wp=document.getElementById('wlServicePicker');
+  if(wp){ wp.innerHTML='<option value="">— Select a service to add —</option>'+SERVICES.map(function(s){return '<option>'+s+'</option>';}).join(''); }
+}
+
+var _wlSelectedServices=[];
+function addWlService(val){
+  if(!val||_wlSelectedServices.includes(val)) return;
+  _wlSelectedServices.push(val);
+  renderWlChips();
+}
+function removeWlService(val){
+  _wlSelectedServices=_wlSelectedServices.filter(function(s){return s!==val;});
+  renderWlChips();
+}
+function renderWlChips(){
+  var chips=document.getElementById('wlServiceChips');
+  if(!chips) return;
+  chips.innerHTML=_wlSelectedServices.map(function(s){
+    return '<span style="display:inline-flex;align-items:center;gap:5px;background:var(--acc-soft);color:var(--acc);border:1px solid rgba(232,160,69,0.2);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;">'
+      +s+'<button onclick="removeWlService(\''+s.replace(/'/g,"\\'")+'\')" style="background:none;border:none;color:var(--acc);cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 2px;">×</button></span>';
+  }).join('');
+  document.getElementById('wlServices').value=_wlSelectedServices.join('\n');
+}
+function clearWlChips(){_wlSelectedServices=[];renderWlChips();}
+function setWlChips(servicesStr){
+  _wlSelectedServices=servicesStr?servicesStr.split('\n').filter(Boolean):[];
+  renderWlChips();
+}
+
+function switchAuthTab(tab,el){
+  document.querySelectorAll('.auth-tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  document.getElementById('authBtn').innerText=tab==='login'?'Login':'Create Account';
+  document.getElementById('signupParlourField').style.display=tab==='signup'?'block':'none';
+  document.getElementById('authErr').classList.remove('show');
+  document.getElementById('authSuc').classList.remove('show');
+}
+
+async function handleAuth(){
+  var email=document.getElementById('authEmail').value.trim();
+  var pass=document.getElementById('authPass').value;
+  var isLogin=document.getElementById('authBtn').innerText==='Login';
+  var errEl=document.getElementById('authErr'), sucEl=document.getElementById('authSuc');
+  errEl.classList.remove('show'); sucEl.classList.remove('show');
+  if(!email||!pass){errEl.innerText='Please enter email and password';errEl.classList.add('show');return;}
+  document.getElementById('authBtn').innerText=isLogin?'Logging in...':'Creating account...';
+  document.getElementById('authBtn').disabled=true;
+  try{
+    if(isLogin){
+      var {data,error}=await SB.auth.signInWithPassword({email,password:pass});
+      if(error) throw error;
+      try { await SB.from('gb_settings').upsert({user_id:data.user.id,parlour_name:'My Parlour'},{onConflict:'user_id',ignoreDuplicates:true}); } catch(e){}
+    } else {
+      var parlourName=document.getElementById('authParlour').value||'My Parlour';
+      var {data,error}=await SB.auth.signUp({email,password:pass});
+      if(error) throw error;
+      if(data.user) await SB.from('gb_settings').insert({user_id:data.user.id,parlour_name:parlourName});
+      sucEl.innerText='Account created! You can now login.';
+      sucEl.classList.add('show');
+      document.getElementById('authBtn').innerText='Login';
+      document.getElementById('authBtn').disabled=false;
+      return;
+    }
+  } catch(err){
+    var msg=err.message||'Something went wrong';
+    if(msg.includes('Invalid login')) msg='Wrong email or password. Please try again.';
+    if(msg.includes('Email not confirmed')) msg='Please verify your email first.';
+    if(msg.includes('User already registered')) msg='This email is already registered. Please login.';
+    errEl.innerText=msg;
+    errEl.classList.add('show');
+    document.getElementById('authBtn').innerText=isLogin?'Login':'Create Account';
+    document.getElementById('authBtn').disabled=false;
+  }
+}
+
+async function logOut(){
+  await SB.auth.signOut();
+  CURRENT_USER=null; B=[];
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('authEmail').value='';
+  document.getElementById('authPass').value='';
+}
+
+function tryParse(s){try{return JSON.parse(s);}catch(e){return null;}}
+
+async function loadData(){
+  var uid=CURRENT_USER.id;
+  var {data:appts}=await SB.from('gb_appointments').select('*').eq('user_id',uid).order('appointment_date').order('appointment_time');
+  var {data:sett}=await SB.from('gb_settings').select('*').eq('user_id',uid).single();
+  B=(appts||[]).map(function(a){
+    return {
+      id:a.id, name:a.client_name, service:a.service,
+      date:a.appointment_date, time:a.appointment_time,
+      total:a.amount, notes:a.notes, serviceDone:a.status==='done',
+      payments:tryParse(a.payments_json)||[],
+      groupPeople:tryParse(a.group_people_json)||[],
+      helpers:tryParse(a.helpers_json)||[]
+    };
+  });
+  if(sett) SETT={name:sett.parlour_name||'My Parlour',owner:sett.owner_name||'',phone:sett.phone||'',addr:sett.address||''};
+  renderAll(); checkRem();
+}
+
+SB.auth.getSession().then(function(res){
+  if(res.data&&res.data.session&&res.data.session.user){
+    CURRENT_USER=res.data.session.user;
+    document.getElementById('authScreen').style.display='none';
+    loadData();
+  }
+});
+SB.auth.onAuthStateChange(function(event,session){
+  if(event==='SIGNED_IN'&&session){
+    CURRENT_USER=session.user;
+    document.getElementById('authScreen').style.display='none';
+    loadData();
+  }
+});
+
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function getPaid(b){return (b.payments||[]).reduce(function(s,p){return s+p.amount;},0);}
+function getRem(b){return Math.max(0,b.total-getPaid(b));}
+function getTotalHelperCost(b){return (b.helpers||[]).reduce(function(s,h){return s+(parseFloat(h.pay)||0)+(parseFloat(h.travel)||0);},0);}
+function getProfit(b){return getPaid(b)-getTotalHelperCost(b);}
+
+function showTab(name,el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.getElementById('pg-'+name).classList.add('on');
+  if(name==='analytics') doCharts(); else renderAll();
+}
+
+function setPayMode(mode){
+  currentPayMode=mode;
+  document.getElementById('payCash').className='pay-btn'+(mode==='cash'?' on':'');
+  document.getElementById('payUpi').className='pay-btn'+(mode==='upi'?' on-upi':'');
+}
+
+// ---- GROUP APPOINTMENT HELPERS ----
+function toggleGroupSection(){
+  var isGroup=document.getElementById('groupToggle').checked;
+  document.getElementById('singleSection').style.display=isGroup?'none':'block';
+  document.getElementById('groupSection').classList.toggle('show',isGroup);
+  if(isGroup && document.getElementById('personsList').children.length===0){
+    addPersonRow(); // add first person row automatically
+  }
+}
+
+function svcOptions(selected){
+  return SERVICES.map(function(s){return '<option'+(s===selected?' selected':'')+'>'+s+'</option>';}).join('');
+}
+
+function addPersonRow(name, service){
+  var idx=document.getElementById('personsList').children.length+1;
+  var div=document.createElement('div');
+  div.className='person-row';
+  div.innerHTML=
+    '<div class="person-row-title">Person '+idx+'</div>'+
+    (idx>1?'<button class="person-remove" onclick="this.parentElement.remove();renumberPersons()">✕</button>':'')+
+    '<div class="fg" style="margin-bottom:8px;"><label>Name</label><input type="text" class="person-name" placeholder="e.g. Ritu" value="'+(name||'')+'"/></div>'+
+    '<div class="fg" style="margin:0;"><label>Service</label><select class="person-service">'+svcOptions(service||'Bridal Makeup')+'</select></div>';
+  document.getElementById('personsList').appendChild(div);
+}
+
+function renumberPersons(){
+  var rows=document.querySelectorAll('#personsList .person-row');
+  rows.forEach(function(row,i){
+    row.querySelector('.person-row-title').innerText='Person '+(i+1);
+  });
+}
+
+function getGroupPeople(){
+  var rows=document.querySelectorAll('#personsList .person-row');
+  var people=[];
+  rows.forEach(function(row){
+    var name=row.querySelector('.person-name').value.trim();
+    var service=row.querySelector('.person-service').value;
+    if(name) people.push({name:name,service:service});
+  });
+  return people;
+}
+
+// ---- HELPER PAY HELPERS ----
+function addHelperRow(name, pay, travel){
+  var div=document.createElement('div');
+  div.className='helper-row';
+  div.innerHTML=
+    '<div class="fg" style="margin:0;flex:2;"><label>Helper Name</label><input type="text" class="helper-name" placeholder="e.g. Kavita" value="'+(name||'')+'"/></div>'+
+    '<div class="fg" style="margin:0;flex:1;"><label>Pay (₹)</label><input type="number" class="helper-pay" placeholder="500" value="'+(pay||'')+'"/></div>'+
+    '<div class="fg" style="margin:0;flex:1;"><label>Travel (₹)</label><input type="number" class="helper-travel" placeholder="0" value="'+(travel||'')+'"/></div>'+
+    '<button class="helper-remove" onclick="this.parentElement.remove()">✕</button>';
+  document.getElementById('helpersList').appendChild(div);
+}
+
+function getHelpers(){
+  var rows=document.querySelectorAll('#helpersList .helper-row');
+  var helpers=[];
+  rows.forEach(function(row){
+    var name=row.querySelector('.helper-name').value.trim();
+    var pay=parseFloat(row.querySelector('.helper-pay').value)||0;
+    var travel=parseFloat(row.querySelector('.helper-travel').value)||0;
+    if(name) helpers.push({name:name,pay:pay,travel:travel});
+  });
+  return helpers;
+}
+
+// ---- OPEN / SAVE BOOKING ----
+function openBookModal(){
+  document.getElementById('editBookId').value='';
+  document.getElementById('bookModalTitle').innerText='New Appointment';
+  ['fn','ft','fno'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('fs').value='Haircut';
+  document.getElementById('fd').value=TODAY;
+  document.getElementById('fa').value='';
+  document.getElementById('fad').value='';
+  document.getElementById('groupToggle').checked=false;
+  document.getElementById('singleSection').style.display='block';
+  document.getElementById('groupSection').classList.remove('show');
+  document.getElementById('personsList').innerHTML='';
+  document.getElementById('helpersList').innerHTML='';
+  openModal('bookModal');
+}
+
+function openEditModal(id){
+  var b=B.find(function(x){return x.id===id;});
+  if(!b) return;
+  document.getElementById('editBookId').value=id;
+  document.getElementById('bookModalTitle').innerText='Edit Appointment';
+  document.getElementById('fn').value=b.name;
+  document.getElementById('fs').value=b.service;
+  document.getElementById('fd').value=b.date;
+  document.getElementById('ft').value=b.time||'';
+  document.getElementById('fa').value=b.total;
+  document.getElementById('fad').value='';
+  document.getElementById('fno').value=b.notes||'';
+
+  // Restore group people
+  var isGroup=b.groupPeople&&b.groupPeople.length>0;
+  document.getElementById('groupToggle').checked=isGroup;
+  document.getElementById('singleSection').style.display=isGroup?'none':'block';
+  document.getElementById('personsList').innerHTML='';
+  if(isGroup){
+    document.getElementById('groupSection').classList.add('show');
+    b.groupPeople.forEach(function(p){addPersonRow(p.name,p.service);});
+  } else {
+    document.getElementById('groupSection').classList.remove('show');
+  }
+
+  // Restore helpers
+  document.getElementById('helpersList').innerHTML='';
+  if(b.helpers&&b.helpers.length){
+    b.helpers.forEach(function(h){addHelperRow(h.name,h.pay,h.travel);});
+  }
+
+  openModal('bookModal');
+}
+
+async function saveBooking(){
+  var name=document.getElementById('fn').value.trim();
+  if(!name){alert('Enter client name!');return;}
+  var isGroup=document.getElementById('groupToggle').checked;
+  var service=isGroup?'Group Appointment':document.getElementById('fs').value;
+  var groupPeople=isGroup?getGroupPeople():[];
+  var helpers=getHelpers();
+  var date=document.getElementById('fd').value||TODAY;
+  var time=document.getElementById('ft').value;
+  var total=parseFloat(document.getElementById('fa').value)||0;
+  var adv=parseFloat(document.getElementById('fad').value)||0;
+  var notes=document.getElementById('fno').value.trim();
+  var eid=document.getElementById('editBookId').value;
+
+  var updateData={
+    client_name:name, service:service,
+    appointment_date:date, appointment_time:time,
+    amount:total, notes:notes,
+    group_people_json:JSON.stringify(groupPeople),
+    helpers_json:JSON.stringify(helpers)
+  };
+
+  if(eid){
+    var b=B.find(function(x){return x.id===eid;});
+    updateData.payments_json=JSON.stringify(b?b.payments:[]);
+    await SB.from('gb_appointments').update(updateData).eq('id',eid);
+    B=B.map(function(x){return x.id===eid?Object.assign({},x,{name:name,service:service,date:date,time:time,total:total,notes:notes,groupPeople:groupPeople,helpers:helpers}):x;});
+  } else {
+    var payments=adv>0?[{amount:adv,note:'Advance',date:date,mode:'cash'}]:[];
+    updateData.user_id=CURRENT_USER.id;
+    updateData.status='pending';
+    updateData.payments_json=JSON.stringify(payments);
+    var {data,error}=await SB.from('gb_appointments').insert(updateData).select().single();
+    if(error){alert('Error saving: '+error.message);return;}
+    if(data) B.push({id:data.id,name:name,service:service,date:date,time:time,total:total,notes:notes,serviceDone:false,payments:payments,groupPeople:groupPeople,helpers:helpers});
+  }
+  closeModal('bookModal'); renderAll(); checkRem();
+}
+
+async function markDone(id){
+  await SB.from('gb_appointments').update({status:'done'}).eq('id',id);
+  B=B.map(function(b){return b.id===id?Object.assign({},b,{serviceDone:true}):b;});
+  renderAll();
+}
+
+async function delBooking(id){
+  if(!confirm('Delete this appointment?')) return;
+  await SB.from('gb_appointments').delete().eq('id',id);
+  B=B.filter(function(b){return b.id!==id;});
+  renderAll();
+}
+
+function openPayModal(id){
+  var b=B.find(function(x){return x.id===id;});
+  if(!b) return;
+  document.getElementById('payBookId').value=id;
+  document.getElementById('payAmt').value='';
+  document.getElementById('payNote').value='Payment';
+  currentPayMode='cash'; setPayMode('cash');
+  document.getElementById('payInfo').innerHTML='<b>'+b.name+'</b> — '+b.service+'<br>Total: ₹'+b.total+' | Paid: ₹'+getPaid(b)+' | <b style="color:var(--gold)">Remaining: ₹'+getRem(b)+'</b>';
+  openModal('payModal');
+}
+
+async function savePayment(){
+  var id=document.getElementById('payBookId').value;
+  var amt=parseFloat(document.getElementById('payAmt').value)||0;
+  var note=document.getElementById('payNote').value||'Payment';
+  if(!amt){alert('Enter amount!');return;}
+  var b=B.find(function(x){return x.id===id;});
+  if(!b) return;
+  var newPayments=b.payments.concat([{amount:amt,note:note,date:TODAY,mode:currentPayMode}]);
+  await SB.from('gb_appointments').update({payments_json:JSON.stringify(newPayments)}).eq('id',id);
+  B=B.map(function(x){return x.id===id?Object.assign({},x,{payments:newPayments}):x;});
+  closeModal('payModal'); renderAll();
+}
+
+function openInvoice(id){
+  var b=B.find(function(x){return x.id===id;});
+  if(!b) return;
+  var paid=getPaid(b), rem=getRem(b);
+  var helperCost=getTotalHelperCost(b);
+  var profit=paid-helperCost;
+  var now=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  var invNo='GB-'+b.id.toString().slice(-6).toUpperCase();
+
+  // Services section
+  var servicesHtml='';
+  if(b.groupPeople&&b.groupPeople.length){
+    servicesHtml='<div class="inv-row hdr"><span>Person</span><span>Service</span><span></span></div>';
+    servicesHtml+=b.groupPeople.map(function(p){return '<div class="inv-row"><span>'+p.name+'</span><span>'+p.service+'</span><span></span></div>';}).join('');
+  } else {
+    servicesHtml='<div class="inv-row"><span><b>'+b.name+'</b></span><span>'+b.service+'</span><span>'+b.date+'</span></div>';
+  }
+
+  var payRows=(b.payments||[]).map(function(p){var modeStr=p.mode?' ('+p.mode.toUpperCase()+')':'';return '<div class="inv-row"><span>'+p.note+modeStr+'</span><span>'+p.date+'</span><span style="color:#2a7a2a">+₹'+p.amount+'</span></div>';}).join('');
+
+  // Helpers section
+  var helperHtml='';
+  if(b.helpers&&b.helpers.length){
+    helperHtml='<br><div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;padding:4px 0;">Helpers & Expenses</div>';
+    b.helpers.forEach(function(h){
+      if(h.pay) helperHtml+='<div class="inv-row"><span>'+h.name+' — Pay</span><span></span><span style="color:#b94040">−₹'+h.pay+'</span></div>';
+      if(h.travel) helperHtml+='<div class="inv-row"><span>'+h.name+' — Travel</span><span></span><span style="color:#b94040">−₹'+h.travel+'</span></div>';
+    });
+    helperHtml+='<div class="inv-row" style="font-weight:700;"><span>Total Expenses</span><span></span><span style="color:#b94040">−₹'+helperCost+'</span></div>';
+  }
+
+  document.getElementById('invInner').innerHTML=
+    '<div class="inv-shop">🌸 '+SETT.name+'</div>'+
+    '<div class="inv-sub">'+(SETT.owner?'Owner: '+SETT.owner+'<br>':'')+(SETT.phone?'📞 '+SETT.phone+'  ':'')+invNo+' · '+now+'</div>'+
+    '<div class="inv-row hdr"><span>Client</span><span>'+(b.groupPeople&&b.groupPeople.length?'Group ('+b.groupPeople.length+' people)':b.service)+'</span><span>Date: '+b.date+'</span></div>'+
+    servicesHtml+'<br>'+
+    '<div class="inv-row hdr"><span>Payment</span><span>Date</span><span>Amt</span></div>'+payRows+
+    '<div class="inv-total-row"><span>Total</span><span>₹'+b.total+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#666;"><span>Paid</span><span style="color:#2a7a2a">₹'+paid+'</span></div>'+
+    (rem>0?'<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#b94040;font-weight:700;"><span>Remaining</span><span>₹'+rem+'</span></div>':'')+
+    helperHtml+
+    (helperCost>0?'<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-size:16px;font-weight:700;border-top:2px solid #000;margin-top:6px;"><span>Net Profit</span><span style="color:#2a7a2a">₹'+profit+'</span></div>':'')+
+    '<div class="inv-footer">Thank you for visiting '+SETT.name+'! 🌸</div>';
+  openModal('invModal');
+}
+
+function copyInvoice(){
+  var txt=document.getElementById('invInner').innerText;
+  var btn=event.target;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){
+      btn.innerText='Copied! Paste in WhatsApp';
+      setTimeout(function(){btn.innerText='📋 Copy for WhatsApp';},2500);
+    });
+  }
+}
+
+function openSettings(){
+  document.getElementById('sName').value=SETT.name;
+  document.getElementById('sOwner').value=SETT.owner;
+  document.getElementById('sPhone').value=SETT.phone;
+  document.getElementById('sAddr').value=SETT.addr;
+  openModal('settModal');
+}
+
+async function saveSettings(){
+  SETT={name:document.getElementById('sName').value||'My Parlour',owner:document.getElementById('sOwner').value||'',phone:document.getElementById('sPhone').value||'',addr:document.getElementById('sAddr').value||''};
+  await SB.from('gb_settings').upsert({user_id:CURRENT_USER.id,parlour_name:SETT.name,owner_name:SETT.owner,phone:SETT.phone,address:SETT.addr});
+  closeModal('settModal');
+}
+
+function checkRem(){
+  var now=new Date();
+  var todayB=B.filter(function(b){return b.date===TODAY&&!b.serviceDone&&b.time;});
+  var upcoming=todayB.filter(function(b){
+    var parts=b.time.split(':');
+    var t=new Date(); t.setHours(parseInt(parts[0]),parseInt(parts[1]),0);
+    var diff=(t-now)/60000;
+    return diff>0&&diff<=30&&dismissedRem.indexOf(b.id)===-1;
+  });
+  if(upcoming.length){
+    var nx=upcoming[0];
+    document.getElementById('remBody').innerHTML='<b>'+nx.name+'</b> — '+nx.service+' at '+nx.time;
+    document.getElementById('remOv').classList.add('show');
+    dismissedRem.push(nx.id);
+  }
+  var next=todayB.sort(function(a,b){return a.time.localeCompare(b.time);})[0];
+  var nb=document.getElementById('nb');
+  if(next){nb.classList.add('show');document.getElementById('nbMain').innerText=next.name+' — '+next.service+' at '+next.time;}
+  else{nb.classList.remove('show');}
+}
+
+function renderAll(){
+  var todayB=B.filter(function(b){return b.date===TODAY;});
+  var thisMonth=new Date().toISOString().slice(0,7);
+  var monthB=B.filter(function(b){return b.date&&b.date.startsWith(thisMonth);});
+  document.getElementById('hToday').innerText='₹'+todayB.reduce(function(s,b){return s+getPaid(b);},0).toFixed(0);
+  document.getElementById('hMonth').innerText='₹'+monthB.reduce(function(s,b){return s+getPaid(b);},0).toFixed(0);
+  document.getElementById('hPending').innerText='₹'+B.filter(function(b){return getRem(b)>0;}).reduce(function(s,b){return s+getRem(b);},0).toFixed(0);
+  var tl=B.filter(function(b){return b.date===TODAY&&!b.serviceDone;});
+  document.getElementById('dt').innerHTML=tl.length?tl.map(card).join(''):'<div class="emp"><span class="emp-icon">🌸</span>No appointments today</div>';
+  var up=B.filter(function(b){return b.date>TODAY&&!b.serviceDone;}).slice(0,20);
+  document.getElementById('up').innerHTML=up.length?up.map(card).join(''):'<div class="emp"><span class="emp-icon">📅</span>No upcoming appointments</div>';
+  var ppl=B.filter(function(b){return getRem(b)>0;});
+  var pdl=B.filter(function(b){return b.serviceDone&&getRem(b)<=0;});
+  document.getElementById('pPending').innerText='₹'+ppl.reduce(function(s,b){return s+getRem(b);},0).toFixed(0);
+  document.getElementById('pDone').innerText='₹'+pdl.reduce(function(s,b){return s+b.total;},0).toFixed(0);
+  document.getElementById('pp').innerHTML=ppl.length?ppl.map(function(b){
+    return '<div class="pi" style="cursor:pointer;border:1px solid var(--gold);background:var(--gold-soft);" onclick="openPayModal(\''+b.id+'\')">'+'<div><div class="pin">'+b.name+'</div><div class="pis">'+b.service+' · '+b.date+'</div></div>'+
+    '<div style="text-align:right;"><div class="pia" style="color:var(--gold)">₹'+getRem(b)+'</div><div class="pi2" style="color:var(--acc);font-weight:600;">tap to pay →</div></div></div>';
+  }).join(''):'<div class="emp"><span class="emp-icon">🎉</span>No pending payments</div>';
+  document.getElementById('pd').innerHTML=pdl.length?pdl.map(function(b){return '<div class="pi"><div><div class="pin">'+b.name+'</div><div class="pis">'+b.service+' · '+b.date+'</div></div><div><div class="pia" style="color:var(--grn)">₹'+b.total+'</div><div class="pi2">paid ✓</div></div></div>';}).join(''):'<div class="emp"><span class="emp-icon">💰</span>No completed payments yet</div>';
+  renderHistory();
+}
+
+function renderHistory(){
+  var df=document.getElementById('histDate')?document.getElementById('histDate').value:'';
+  var list=df?B.filter(function(b){return b.date===df;}):B.slice().reverse();
+  document.getElementById('hist').innerHTML=list.length?list.map(card).join(''):'<div class="emp"><span class="emp-icon">📋</span>No appointments found</div>';
+}
+
+function card(b){
+  var paid=getPaid(b), rem=getRem(b);
+  var helperCost=getTotalHelperCost(b);
+  var profit=paid-helperCost;
+  var sdg=b.serviceDone?'<span class="dg sg">Done</span>':'<span class="dg sy">Pending</span>';
+  var remDg=rem>0?'<span class="dg sr">₹'+rem+' due</span>':'<span class="dg sg">Fully Paid</span>';
+
+  // Group people badges
+  var groupInfo='';
+  if(b.groupPeople&&b.groupPeople.length){
+    groupInfo='<div style="margin-top:6px;">';
+    groupInfo+='<span class="group-badge">👥 '+b.groupPeople.length+' people</span>';
+    b.groupPeople.slice(0,3).forEach(function(p){groupInfo+='<span class="group-badge">'+p.name+': '+p.service+'</span>';});
+    if(b.groupPeople.length>3) groupInfo+='<span class="group-badge">+'+( b.groupPeople.length-3)+' more</span>';
+    groupInfo+='</div>';
+  }
+
+  // Payment history
+  var hist=(b.payments&&b.payments.length)?'<div class="ph">'+b.payments.map(function(p){return '<div class="pe"><span>'+p.note+(p.mode?' · '+p.mode.toUpperCase():'')+' · '+p.date+'</span><b>+₹'+p.amount+'</b></div>';}).join('')+'</div>':'';
+
+  // Profit summary (only show if helpers exist or paid)
+  var profitBar='';
+  if(b.helpers&&b.helpers.length){
+    profitBar='<div class="profit-bar">'+
+      '<div class="profit-item"><span>Collected</span><b>₹'+paid+'</b></div>'+
+      '<div class="profit-item expense"><span>Expenses</span><b>−₹'+helperCost+'</b></div>'+
+      '<div class="profit-item profit" style="grid-column:span 2"><span>Net Profit</span><b>₹'+profit+'</b></div>'+
+      '</div>';
+  }
+
+  var btns='';
+  if(!b.serviceDone) btns+='<button class="ab ag" onclick="markDone(\''+b.id+'\')">✓ Done</button>';
+  if(rem>0) btns+='<button class="ab aa" onclick="openPayModal(\''+b.id+'\')">+ Pay</button>';
+  btns+='<button class="ab ar" onclick="openInvoice(\''+b.id+'\')">🧾 Invoice</button>';
+  btns+='<button class="ab aa" onclick="openEditModal(\''+b.id+'\')">✏️ Edit</button>';
+  btns+='<button class="ab ad" onclick="delBooking(\''+b.id+'\')">🗑️</button>';
+
+  var serviceLabel=b.groupPeople&&b.groupPeople.length?'Group ('+b.groupPeople.length+' people)':b.service;
+
+  return '<div class="bc'+(rem>0&&!b.serviceDone?' bt':'')+(b.serviceDone&&rem<=0?' bd':'')+'">'+
+    '<div class="bc-top"><div><div class="bc-name">'+b.name+'</div><div class="bc-service">'+serviceLabel+(b.time?' · '+b.time:'')+(b.date?' · '+b.date:'')+'</div></div>'+
+    '<div><div class="bc-total">₹'+b.total+'</div>'+(rem>0?'<div class="bc-rem">₹'+rem+' due</div>':'')+'</div></div>'+
+    '<div>'+sdg+remDg+'</div>'+groupInfo+profitBar+hist+
+    '<div class="bc-btns">'+btns+'</div></div>';
+}
+
+function doCharts(){
+  renderAll();
+  var totRev=B.reduce(function(s,b){return s+b.total;},0);
+  var totCash=B.reduce(function(s,b){return s+b.payments.filter(function(p){return p.mode!=='upi';}).reduce(function(a,p){return a+p.amount;},0);},0);
+  var totUpi=B.reduce(function(s,b){return s+b.payments.filter(function(p){return p.mode==='upi';}).reduce(function(a,p){return a+p.amount;},0);},0);
+  document.getElementById('aTot').innerText=B.length;
+  document.getElementById('aRev').innerText='₹'+totRev.toFixed(0);
+  document.getElementById('aCash').innerText='₹'+totCash.toFixed(0);
+  document.getElementById('aUpi').innerText='₹'+totUpi.toFixed(0);
+  var svcMap={};
+  B.forEach(function(b){
+    if(b.groupPeople&&b.groupPeople.length){
+      b.groupPeople.forEach(function(p){svcMap[p.service]=(svcMap[p.service]||0)+1;});
+    } else {
+      svcMap[b.service]=(svcMap[b.service]||0)+1;
+    }
+  });
+  var topSvc=Object.entries(svcMap).sort(function(a,b){return b[1]-a[1];})[0];
+  document.getElementById('aBest').innerText=topSvc?topSvc[0]:'—';
+  var days=[],revs=[];
+  for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var k=d.toISOString().split('T')[0];days.push(d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));revs.push(B.filter(function(b){return b.date===k;}).reduce(function(s,b){return s+getPaid(b);},0));}
+  var cfg={responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6a5a4a',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#6a5a4a',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true}}};
+  if(revChart)revChart.destroy();
+  revChart=new Chart(document.getElementById('revChart'),{type:'bar',data:{labels:days,datasets:[{data:revs,backgroundColor:'rgba(232,160,69,0.15)',borderColor:'#e8a045',borderWidth:2,borderRadius:8}]},options:cfg});
+  var svcLabels=Object.keys(svcMap),svcVals=svcLabels.map(function(k){return svcMap[k];});
+  if(svcChart)svcChart.destroy();
+  svcChart=new Chart(document.getElementById('svcChart'),{type:'doughnut',data:{labels:svcLabels,datasets:[{data:svcVals,backgroundColor:['#e8a045','#f0b96a','#e07272','#5cb87a','#f0c040','#a89880','#6a5a4a'],borderWidth:0,borderRadius:4}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:11},color:'#a89880'}}}}});
+
+  // Work Log chart — net earnings last 7 days
+  renderWorkLog(); // update analytics WL stats too
+  var wlDays=[],wlNets=[];
+  for(var j=6;j>=0;j--){
+    var dw=new Date(); dw.setDate(dw.getDate()-j);
+    var kw=dw.getFullYear()+'-'+String(dw.getMonth()+1).padStart(2,'0')+'-'+String(dw.getDate()).padStart(2,'0');
+    wlDays.push(dw.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));
+    wlNets.push(WL.filter(function(w){return w.date===kw;}).reduce(function(s,w){return s+w.net;},0));
+  }
+  var wlCfg={responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6a5a4a',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#6a5a4a',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true}}};
+  if(window.wlChart) window.wlChart.destroy();
+  window.wlChart=new Chart(document.getElementById('wlChart'),{type:'bar',data:{labels:wlDays,datasets:[{data:wlNets,backgroundColor:'rgba(192,113,107,0.15)',borderColor:'#c0716b',borderWidth:2,borderRadius:8}]},options:wlCfg});
+}
+
+function renderSummary(){
+  var thisMonth=new Date().toISOString().slice(0,7);
+
+  // ---- THIS MONTH ----
+  var mB=B.filter(function(b){return b.date&&b.date.startsWith(thisMonth);});
+  var mParTotal=mB.reduce(function(s,b){return s+b.total;},0);
+  var mParCollected=mB.reduce(function(s,b){return s+getPaid(b);},0);
+  var mParExp=mB.reduce(function(s,b){return s+getTotalHelperCost(b);},0);
+  var mParNet=mParCollected-mParExp;
+  document.getElementById('smParTotal').innerText='₹'+mParTotal.toFixed(0);
+  document.getElementById('smParCollected').innerText='₹'+mParCollected.toFixed(0);
+  document.getElementById('smParExp').innerText='−₹'+mParExp.toFixed(0);
+  document.getElementById('smParNet').innerText='₹'+mParNet.toFixed(0);
+
+  var mWl=WL.filter(function(w){return w.date&&w.date.startsWith(thisMonth);});
+  var mWlEarned=mWl.reduce(function(s,w){return s+w.earned;},0);
+  var mWlTravelPaid=mWl.reduce(function(s,w){return s+w.travelPaid;},0);
+  var mWlTravelRecv=mWl.reduce(function(s,w){return s+w.travelRecv;},0);
+  var mWlNet=mWl.reduce(function(s,w){return s+getWlNet(w);},0);
+  var mWlCollected=mWl.reduce(function(s,w){return s+getWlPaid(w);},0);
+  document.getElementById('smWlJobs').innerText=mWl.length;
+  document.getElementById('smWlEarned').innerText='₹'+mWlEarned.toFixed(0);
+  document.getElementById('smWlTravel').innerText='−₹'+mWlTravelPaid.toFixed(0);
+  document.getElementById('smWlTravelRecv').innerText='+₹'+mWlTravelRecv.toFixed(0);
+  document.getElementById('smWlNet').innerText='₹'+mWlNet.toFixed(0);
+
+  var mGrand=mParNet+mWlNet;
+  document.getElementById('smGrandParM').innerText='₹'+mParNet.toFixed(0);
+  document.getElementById('smGrandWlM').innerText='₹'+mWlNet.toFixed(0);
+  document.getElementById('smGrandTotalM').innerText='₹'+mGrand.toFixed(0);
+
+  // ---- ALL TIME ----
+  var aParTotal=B.reduce(function(s,b){return s+b.total;},0);
+  var aParCollected=B.reduce(function(s,b){return s+getPaid(b);},0);
+  var aParExp=B.reduce(function(s,b){return s+getTotalHelperCost(b);},0);
+  var aParNet=aParCollected-aParExp;
+  document.getElementById('saParTotal').innerText='₹'+aParTotal.toFixed(0);
+  document.getElementById('saParCollected').innerText='₹'+aParCollected.toFixed(0);
+  document.getElementById('saParExp').innerText='−₹'+aParExp.toFixed(0);
+  document.getElementById('saParNet').innerText='₹'+aParNet.toFixed(0);
+
+  var aWlEarned=WL.reduce(function(s,w){return s+w.earned;},0);
+  var aWlTravelPaid=WL.reduce(function(s,w){return s+w.travelPaid;},0);
+  var aWlTravelRecv=WL.reduce(function(s,w){return s+w.travelRecv;},0);
+  var aWlNet=WL.reduce(function(s,w){return s+getWlNet(w);},0);
+  document.getElementById('saWlJobs').innerText=WL.length;
+  document.getElementById('saWlEarned').innerText='₹'+aWlEarned.toFixed(0);
+  document.getElementById('saWlTravel').innerText='−₹'+aWlTravelPaid.toFixed(0);
+  document.getElementById('saWlTravelRecv').innerText='+₹'+aWlTravelRecv.toFixed(0);
+  document.getElementById('saWlNet').innerText='₹'+aWlNet.toFixed(0);
+
+  var aGrand=aParNet+aWlNet;
+  document.getElementById('saGrandPar').innerText='₹'+aParNet.toFixed(0);
+  document.getElementById('saGrandWl').innerText='₹'+aWlNet.toFixed(0);
+  document.getElementById('saGrandTotal').innerText='₹'+aGrand.toFixed(0);
+}
+
+// ---- WORK LOG ----
+var WL=[];
+var currentTab='today';
+var currentWlPayMode='cash';
+
+function fabClick(){
+  if(currentTab==='worklog') openWorklogModal();
+  else openBookModal();
+}
+
+function calcWlNet(){
+  var earned=parseFloat(document.getElementById('wlEarnedAmt').value)||0;
+  var tPaid=parseFloat(document.getElementById('wlTravelPaid').value)||0;
+  var tRecv=parseFloat(document.getElementById('wlTravelRecv').value)||0;
+  var net=earned+tRecv-tPaid;
+  document.getElementById('wlPreviewEarned').innerText='₹'+earned;
+  document.getElementById('wlPreviewRecv').innerText='+₹'+tRecv;
+  document.getElementById('wlPreviewPaid').innerText='−₹'+tPaid;
+  document.getElementById('wlPreviewNet').innerText='₹'+net;
+}
+
+function openWorklogModal(){
+  document.getElementById('wlEditId').value='';
+  document.getElementById('wlModalTitle').innerText='New Work Entry';
+  document.getElementById('wlDate').value=TODAY;
+  document.getElementById('wlWith').value='';
+  document.getElementById('wlClients').value='';
+  document.getElementById('wlEarnedAmt').value='';
+  document.getElementById('wlAdvance').value='';
+  document.getElementById('wlServices').value='';
+  document.getElementById('wlTravelPaid').value='';
+  document.getElementById('wlTravelRecv').value='';
+  document.getElementById('wlNotes').value='';
+  clearWlChips();
+  calcWlNet();
+  openModal('worklogModal');
+}
+
+function openEditWorklog(id){
+  var w=WL.find(function(x){return x.id===id;});
+  if(!w) return;
+  document.getElementById('wlEditId').value=id;
+  document.getElementById('wlModalTitle').innerText='Edit Work Entry';
+  document.getElementById('wlDate').value=w.date;
+  document.getElementById('wlWith').value=w.withPerson;
+  document.getElementById('wlClients').value=w.numClients;
+  document.getElementById('wlEarnedAmt').value=w.earned;
+  document.getElementById('wlAdvance').value='';
+  document.getElementById('wlServices').value=w.services;
+  document.getElementById('wlTravelPaid').value=w.travelPaid;
+  document.getElementById('wlTravelRecv').value=w.travelRecv;
+  document.getElementById('wlNotes').value=w.notes||'';
+  setWlChips(w.services);
+  calcWlNet();
+  openModal('worklogModal');
+}
+
+function getWlPaid(w){ return (w.payments||[]).reduce(function(s,p){return s+p.amount;},0); }
+function getWlRem(w){ return Math.max(0,w.earned - getWlPaid(w)); }
+function getWlNet(w){ return getWlPaid(w) + (w.travelRecv||0) - (w.travelPaid||0); }
+
+async function saveWorkLog(){
+  var date=document.getElementById('wlDate').value||TODAY;
+  var withPerson=document.getElementById('wlWith').value.trim();
+  var numClients=parseInt(document.getElementById('wlClients').value)||1;
+  var earned=parseFloat(document.getElementById('wlEarnedAmt').value)||0;
+  var advance=parseFloat(document.getElementById('wlAdvance').value)||0;
+  var services=document.getElementById('wlServices').value.trim();
+  var travelPaid=parseFloat(document.getElementById('wlTravelPaid').value)||0;
+  var travelRecv=parseFloat(document.getElementById('wlTravelRecv').value)||0;
+  var notes=document.getElementById('wlNotes').value.trim();
+  if(!withPerson){alert('Please enter who you went with!');return;}
+  var eid=document.getElementById('wlEditId').value;
+
+  if(eid){
+    var existing=WL.find(function(x){return x.id===eid;});
+    var payments=existing?existing.payments:[];
+    var net=getWlPaid({payments:payments})+(travelRecv||0)-(travelPaid||0);
+    var entry={date:date,withperson:withPerson,numclients:numClients,earned:earned,services:services,travelpaid:travelPaid,travelrecv:travelRecv,net:net,notes:notes,payments_json:JSON.stringify(payments)};
+    await SB.from('gb_worklog').update(entry).eq('id',eid);
+    WL=WL.map(function(x){return x.id===eid?Object.assign({},x,{date:date,withPerson:withPerson,numClients:numClients,earned:earned,services:services,travelPaid:travelPaid,travelRecv:travelRecv,net:net,notes:notes}):x;});
+  } else {
+    var payments=advance>0?[{amount:advance,note:'Advance',date:date,mode:'cash'}]:[];
+    var net=(advance)+(travelRecv||0)-(travelPaid||0);
+    var entry={user_id:CURRENT_USER.id,date:date,withperson:withPerson,numclients:numClients,earned:earned,services:services,travelpaid:travelPaid,travelrecv:travelRecv,net:net,notes:notes,payments_json:JSON.stringify(payments)};
+    var {data,error}=await SB.from('gb_worklog').insert(entry).select().single();
+    if(error){alert('Error saving: '+error.message);return;}
+    if(data) WL.push({id:data.id,date:date,withPerson:withPerson,numClients:numClients,earned:earned,services:services,travelPaid:travelPaid,travelRecv:travelRecv,net:net,notes:notes,payments:payments});
+  }
+  closeModal('worklogModal');
+  renderWorkLog();
+}
+
+function setWlPayMode(mode){
+  currentWlPayMode=mode;
+  document.getElementById('wlPayCash').className='pay-btn'+(mode==='cash'?' on':'');
+  document.getElementById('wlPayUpi').className='pay-btn'+(mode==='upi'?' on-upi':'');
+}
+
+function openWlPayModal(id){
+  var w=WL.find(function(x){return x.id===id;});
+  if(!w) return;
+  document.getElementById('wlPayId').value=id;
+  document.getElementById('wlPayAmt').value='';
+  document.getElementById('wlPayNote').value='Payment';
+  currentWlPayMode='cash'; setWlPayMode('cash');
+  var paid=getWlPaid(w), rem=getWlRem(w);
+  document.getElementById('wlPayInfo').innerHTML='<b>'+w.withPerson+'</b> · '+w.date+'<br>Total: ₹'+w.earned+' | Received: ₹'+paid+' | <b style="color:var(--gold)">Remaining: ₹'+rem+'</b>';
+  openModal('wlPayModal');
+}
+
+async function saveWlPayment(){
+  var id=document.getElementById('wlPayId').value;
+  var amt=parseFloat(document.getElementById('wlPayAmt').value)||0;
+  var note=document.getElementById('wlPayNote').value||'Payment';
+  if(!amt){alert('Enter amount!');return;}
+  var w=WL.find(function(x){return x.id===id;});
+  if(!w) return;
+  var newPayments=(w.payments||[]).concat([{amount:amt,note:note,date:TODAY,mode:currentWlPayMode}]);
+  var newNet=newPayments.reduce(function(s,p){return s+p.amount;},0)+(w.travelRecv||0)-(w.travelPaid||0);
+  await SB.from('gb_worklog').update({payments_json:JSON.stringify(newPayments),net:newNet}).eq('id',id);
+  WL=WL.map(function(x){return x.id===id?Object.assign({},x,{payments:newPayments,net:newNet}):x;});
+  closeModal('wlPayModal');
+  renderWorkLog();
+}
+
+async function deleteWorkLog(id){
+  if(!confirm('Delete this entry?')) return;
+  await SB.from('gb_worklog').delete().eq('id',id);
+  WL=WL.filter(function(x){return x.id!==id;});
+  renderWorkLog();
+}
+
+async function loadWorkLog(){
+  var {data}=await SB.from('gb_worklog').select('*').eq('user_id',CURRENT_USER.id).order('date',{ascending:false});
+  WL=(data||[]).map(function(w){
+    var payments=[];try{payments=JSON.parse(w.payments_json)||[];}catch(e){}
+    var travelPaid=w.travelpaid||0, travelRecv=w.travelrecv||0;
+    var paid=payments.reduce(function(s,p){return s+p.amount;},0);
+    var net=paid+travelRecv-travelPaid;
+    return {id:w.id,date:w.date,withPerson:w.withperson||'',numClients:w.numclients||1,earned:w.earned||0,services:w.services||'',travelPaid:travelPaid,travelRecv:travelRecv,net:net,notes:w.notes||'',payments:payments};
+  });
+}
+
+function renderWorkLog(){
+  var totalJobs=WL.length;
+  var totalEarned=WL.reduce(function(s,w){return s+w.earned;},0);
+  var totalCollected=WL.reduce(function(s,w){return s+getWlPaid(w);},0);
+  var totalNet=WL.reduce(function(s,w){return s+getWlNet(w);},0);
+  var totalTravelPaid=WL.reduce(function(s,w){return s+w.travelPaid;},0);
+  var totalTravelRecv=WL.reduce(function(s,w){return s+w.travelRecv;},0);
+  var totalPending=WL.reduce(function(s,w){return s+getWlRem(w);},0);
+
+  // Work Log tab stats
+  document.getElementById('wlJobs').innerText=totalJobs;
+  document.getElementById('wlEarned').innerText='₹'+totalEarned.toFixed(0);
+  document.getElementById('wlNet').innerText='₹'+totalNet.toFixed(0);
+
+  // Dashboard header stats
+  document.getElementById('hWlJobs').innerText=totalJobs;
+  document.getElementById('hWlEarned').innerText='₹'+totalCollected.toFixed(0);
+  document.getElementById('hWlNet').innerText='₹'+totalNet.toFixed(0);
+
+  // Analytics stats
+  if(document.getElementById('aWlJobs')){
+    document.getElementById('aWlJobs').innerText=totalJobs;
+    document.getElementById('aWlEarned').innerText='₹'+totalCollected.toFixed(0);
+    document.getElementById('aWlNet').innerText='₹'+totalNet.toFixed(0);
+    document.getElementById('aWlTravelPaid').innerText='₹'+totalTravelPaid.toFixed(0);
+    document.getElementById('aWlTravelRecv').innerText='₹'+totalTravelRecv.toFixed(0);
+  }
+
+  if(!WL.length){
+    document.getElementById('wlList').innerHTML='<div class="emp"><span class="emp-icon">💼</span>No work entries yet.<br>Tap + to log when you go as a helper!</div>';
+    return;
+  }
+
+  document.getElementById('wlList').innerHTML=WL.map(function(w){
+    var paid=getWlPaid(w), rem=getWlRem(w), net=getWlNet(w);
+    var serviceLines=w.services?w.services.split('\n').filter(Boolean).map(function(s){return '<span class="group-badge">'+s.trim()+'</span>';}).join(''):'';
+    var payHist=(w.payments&&w.payments.length)?'<div class="ph">'+w.payments.map(function(p){return '<div class="pe"><span>'+p.note+(p.mode?' · '+p.mode.toUpperCase():'')+' · '+p.date+'</span><b>+₹'+p.amount+'</b></div>';}).join('')+'</div>':'';
+    var statusDg=rem>0?'<span class="dg sy">₹'+rem+' pending</span>':'<span class="dg sg">Fully Received</span>';
+    return '<div class="bc'+(rem>0?' bt':'bd')+'">' +
+      '<div class="bc-top">'+
+        '<div><div class="bc-name">'+w.withPerson+'</div>'+
+        '<div class="bc-service">'+w.date+' · '+w.numClients+' client'+(w.numClients>1?'s':'')+'</div></div>'+
+        '<div><div class="bc-total" style="color:var(--grn)">₹'+net+'</div>'+
+        (rem>0?'<div class="bc-rem">₹'+rem+' due</div>':'<div class="bc-rem" style="color:var(--grn)">net ✓</div>')+'</div>'+
+      '</div>'+
+      '<div>'+statusDg+'</div>'+
+      (serviceLines?'<div style="margin:6px 0 4px;">'+serviceLines+'</div>':'')+
+      '<div class="profit-bar" style="margin-top:8px;">'+
+        '<div class="profit-item"><span>Total</span><b style="color:var(--acc)">₹'+w.earned+'</b></div>'+
+        '<div class="profit-item"><span>Received</span><b style="color:var(--grn)">₹'+paid+'</b></div>'+
+        '<div class="profit-item expense"><span>Travel Paid</span><b>−₹'+w.travelPaid+'</b></div>'+
+        '<div class="profit-item"><span>Travel Recv</span><b style="color:var(--grn)">+₹'+w.travelRecv+'</b></div>'+
+      '</div>'+
+      payHist+
+      '<div class="bc-btns">'+
+        (rem>0?'<button class="ab aa" onclick="openWlPayModal(\''+w.id+'\')">+ Collect</button>':'')+
+        '<button class="ab aa" onclick="openEditWorklog(\''+w.id+'\')">✏️ Edit</button>'+
+        '<button class="ab ad" onclick="deleteWorkLog(\''+w.id+'\')">🗑️ Delete</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+// Override showTab to handle worklog
+function showTab(name,el){
+  currentTab=name;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.getElementById('pg-'+name).classList.add('on');
+  if(name==='analytics') doCharts();
+  else if(name==='worklog') renderWorkLog();
+  else if(name==='summary') renderSummary();
+  else renderAll();
+}
+
+// Patch loadData to also load work log
+var _origLoadData=loadData;
+async function loadData(){
+  await _origLoadData();
+  await loadWorkLog();
+}
+
+document.getElementById('histDate').value=TODAY;
+populateSelects();
+setInterval(checkRem,60000);
+</script>
+</body>
+</html>
