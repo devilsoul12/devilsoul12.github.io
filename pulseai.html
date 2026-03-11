@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Pulse AI ⚡</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Noto+Sans+Devanagari:wght@400;500;700&family=Noto+Sans+Gujarati:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080810;
+      --surf: #0f0f1a;
+      --acc: #7c6aff;
+      --acc2: #a594ff;
+      --acc-soft: rgba(124,106,255,0.12);
+      --cyan: #00d4ff;
+      --cyan-soft: rgba(0,212,255,0.1);
+      --green: #00e5a0;
+      --green-soft: rgba(0,229,160,0.1);
+      --gold: #ffd166;
+      --gold-soft: rgba(255,209,102,0.1);
+      --txt: #f0eeff;
+      --txt2: #8b85b0;
+      --txt3: #4a4570;
+      --bdr: rgba(124,106,255,0.12);
+      --bdr2: rgba(124,106,255,0.2);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { background:var(--bg); color:var(--txt); font-family:'DM Sans',sans-serif; min-height:100vh; }
+    body::before { content:''; position:fixed; top:-30%; left:-20%; width:60%; height:60%; background:radial-gradient(ellipse, rgba(124,106,255,0.08) 0%, transparent 70%); pointer-events:none; z-index:0; }
+    body::after { content:''; position:fixed; bottom:-20%; right:-10%; width:50%; height:50%; background:radial-gradient(ellipse, rgba(0,212,255,0.06) 0%, transparent 70%); pointer-events:none; z-index:0; }
+
+    header { padding:16px 20px 12px; display:flex; justify-content:space-between; align-items:center; position:relative; z-index:10; border-bottom:1px solid var(--bdr); gap:12px; }
+    .logo { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .logo-icon { width:36px; height:36px; background:linear-gradient(135deg, var(--acc), var(--cyan)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .logo-text { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; letter-spacing:-0.02em; }
+    .logo-text span { background:linear-gradient(90deg, var(--acc2), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .logo-sub { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--txt3); margin-top:1px; }
+
+    .lang-select { background:var(--surf); border:1px solid var(--bdr2); color:var(--txt); padding:8px 30px 8px 12px; border-radius:20px; font-size:13px; cursor:pointer; outline:none; font-family:'DM Sans',sans-serif; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%238b85b0'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:border-color 0.2s; }
+    .lang-select:focus { border-color:var(--acc); }
+    .lang-select option { background:#0f0f1a; }
+
+    .hero { padding:28px 20px 20px; position:relative; z-index:10; text-align:center; }
+    .hero-badge { display:inline-flex; align-items:center; gap:6px; background:var(--acc-soft); border:1px solid var(--bdr2); padding:5px 12px; border-radius:20px; font-size:11px; color:var(--acc2); letter-spacing:0.08em; text-transform:uppercase; font-weight:500; margin-bottom:14px; }
+    .hero-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--acc); animation:blink 1.5s infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    .hero-title { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; letter-spacing:-0.03em; line-height:1.2; margin-bottom:8px; }
+    .hero-title span { background:linear-gradient(90deg, var(--acc2), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .hero-sub { font-size:14px; color:var(--txt2); line-height:1.6; max-width:300px; margin:0 auto 20px; }
+    .refresh-btn { background:linear-gradient(135deg, var(--acc), var(--cyan)); color:#fff; border:none; border-radius:12px; padding:13px 28px; font-size:14px; font-family:'Syne',sans-serif; font-weight:700; cursor:pointer; letter-spacing:0.04em; transition:opacity 0.2s, transform 0.1s; }
+    .refresh-btn:active { opacity:0.85; transform:scale(0.98); }
+    .refresh-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    .content { padding:8px 20px 40px; max-width:600px; margin:0 auto; position:relative; z-index:10; }
+    .loading-wrap { text-align:center; padding:40px 20px; }
+    .loading-orb { width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg, var(--acc), var(--cyan)); margin:0 auto 20px; animation:pulse-orb 1.5s ease-in-out infinite; }
+    @keyframes pulse-orb { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.1);opacity:0.7;} }
+    .loading-txt { font-size:14px; color:var(--txt2); }
+    .loading-sub { font-size:12px; color:var(--txt3); margin-top:6px; }
+
+    /* CARD */
+    .card { background:var(--surf); border:1px solid var(--bdr); border-radius:20px; margin-bottom:14px; position:relative; overflow:hidden; animation:fadeUp 0.4s ease both; transition:border-color 0.2s; }
+    .card:nth-child(2){animation-delay:0.1s;} .card:nth-child(3){animation-delay:0.2s;} .card:nth-child(4){animation-delay:0.3s;}
+    .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+    .card.news::before { background:linear-gradient(90deg, var(--acc), var(--acc2)); }
+    .card.tool::before { background:linear-gradient(90deg, var(--cyan), var(--green)); }
+    .card.learn::before { background:linear-gradient(90deg, var(--gold), #ff9d4d); }
+    .card.tip::before { background:linear-gradient(90deg, var(--green), var(--cyan)); }
+    .card.open { border-color: var(--bdr2); }
+
+    /* CARD HEADER - always visible, tappable */
+    .card-header { padding:20px; cursor:pointer; display:flex; gap:14px; align-items:flex-start; }
+    .card-header:active { opacity:0.8; }
+    .card-emoji { font-size:28px; flex-shrink:0; margin-top:2px; }
+    .card-header-text { flex:1; }
+    .card-tag { display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; padding:3px 10px; border-radius:20px; margin-bottom:8px; }
+    .card-tag.news { background:var(--acc-soft); color:var(--acc2); }
+    .card-tag.tool { background:var(--cyan-soft); color:var(--cyan); }
+    .card-tag.learn { background:var(--gold-soft); color:var(--gold); }
+    .card-tag.tip { background:var(--green-soft); color:var(--green); }
+    .card-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; line-height:1.3; margin-bottom:6px; }
+    .card-summary { font-size:13px; color:var(--txt2); line-height:1.6; }
+    .card-chevron { flex-shrink:0; color:var(--txt3); font-size:18px; margin-top:4px; transition:transform 0.3s; }
+    .card.open .card-chevron { transform:rotate(180deg); color:var(--acc2); }
+
+    /* TAP HINT */
+    .tap-hint { font-size:11px; color:var(--txt3); margin-top:6px; display:flex; align-items:center; gap:4px; }
+    .card.open .tap-hint { display:none; }
+
+    /* EXPANDED CONTENT */
+    .card-expand { max-height:0; overflow:hidden; transition:max-height 0.4s ease; }
+    .card.open .card-expand { max-height:1000px; }
+    .card-expand-inner { padding:0 20px 20px; border-top:1px solid var(--bdr); margin-top:0; }
+    .expand-section { margin-top:16px; }
+    .expand-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--txt3); margin-bottom:8px; }
+    .expand-body { font-size:14px; color:var(--txt2); line-height:1.8; }
+
+    /* KEY POINTS */
+    .key-points { list-style:none; margin-top:8px; }
+    .key-points li { font-size:14px; color:var(--txt2); line-height:1.7; padding:6px 0; border-bottom:1px solid var(--bdr); display:flex; gap:8px; }
+    .key-points li:last-child { border-bottom:none; }
+    .key-points li::before { content:'→'; color:var(--acc2); flex-shrink:0; }
+
+    /* LINKS */
+    .expand-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .expand-link { display:inline-flex; align-items:center; gap:6px; background:var(--acc-soft); border:1px solid var(--bdr2); color:var(--acc2); padding:7px 14px; border-radius:20px; font-size:12px; text-decoration:none; transition:all 0.2s; }
+    .expand-link:active { background:var(--acc); color:#fff; }
+    .expand-link.cyan { background:var(--cyan-soft); border-color:rgba(0,212,255,0.2); color:var(--cyan); }
+    .expand-link.gold { background:var(--gold-soft); border-color:rgba(255,209,102,0.2); color:var(--gold); }
+    .expand-link.green { background:var(--green-soft); border-color:rgba(0,229,160,0.2); color:var(--green); }
+
+    /* TRY IT BOX */
+    .try-box { background:rgba(124,106,255,0.06); border:1px solid var(--bdr2); border-radius:12px; padding:14px; margin-top:10px; }
+    .try-box-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--acc2); margin-bottom:8px; }
+    .try-box-prompt { font-size:13px; color:var(--txt); line-height:1.7; font-style:italic; }
+
+    .divider { display:flex; align-items:center; gap:12px; margin:20px 0; }
+    .divider-line { flex:1; height:1px; background:var(--bdr); }
+    .divider-txt { font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--txt3); }
+
+    .footer { text-align:center; padding:20px; color:var(--txt3); font-size:11px; position:relative; z-index:10; }
+    .empty-state { text-align:center; padding:40px 20px; color:var(--txt2); }
+    .empty-state .big { font-size:48px; display:block; margin-bottom:12px; }
+    .empty-state p { font-size:14px; line-height:1.6; }
+    .debug-box { background:#1a0a0a; border:1px solid #ff4444; border-radius:10px; padding:12px; margin:10px 0; font-size:11px; color:#ff8888; font-family:monospace; word-break:break-all; text-align:left; }
+    .native { font-family:'Noto Sans Devanagari','Noto Sans Gujarati','DM Sans',sans-serif !important; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">Pulse <span>AI</span></div>
+      <div class="logo-sub">Your daily AI briefing</div>
+    </div>
+  </div>
+  <select class="lang-select" id="langSelect" onchange="onLangChange()">
+    <option value="en">🇬🇧 English</option>
+    <option value="hi">🇮🇳 Hindi</option>
+    <option value="mr">🇮🇳 Marathi</option>
+    <option value="gu">🇮🇳 Gujarati</option>
+  </select>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">Live • Powered by AI</div>
+  <div class="hero-title">Stay ahead of the<br><span>AI revolution</span></div>
+  <div class="hero-sub">Fresh AI news, tools & lessons. Tap any card to dive deeper!</div>
+  <button class="refresh-btn" id="refreshBtn" onclick="loadPulse()">⚡ Get Today's Pulse</button>
+</div>
+
+<div class="content" id="content">
+  <div class="empty-state">
+    <span class="big">🤖</span>
+    <p>Tap the button above to get your<br>daily AI briefing — fresh every day!</p>
+  </div>
+</div>
+
+<div class="footer">Made with ⚡ by Pulse AI · Powered by Groq AI</div>
+
+<script>
+var BACKEND_URL = 'https://pulseai-backend.vercel.app/api/pulse';
+var isLoading = false;
+var contentLoaded = false;
+
+var LANG_PROMPTS = {
+  en: 'English',
+  hi: 'Hindi (use Devanagari script)',
+  mr: 'Marathi (use Devanagari script)',
+  gu: 'Gujarati (use Gujarati script)'
+};
+
+function onLangChange() {
+  if (contentLoaded) loadPulse();
+}
+
+function toggleCard(el) {
+  el.classList.toggle('open');
+}
+
+function loadPulse() {
+  if (isLoading) return;
+  isLoading = true;
+  var lang = document.getElementById('langSelect').value;
+  var btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.innerText = '⏳ Fetching...';
+
+  document.getElementById('content').innerHTML =
+    '<div class="loading-wrap"><div class="loading-orb"></div>' +
+    '<div class="loading-txt">AI is reading the world for you...</div>' +
+    '<div class="loading-sub">This takes about 5-10 seconds</div></div>';
+
+  var TODAY = new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+  var prompt = 'You are Pulse AI — a daily AI briefing for people in India.\n\nToday is ' + TODAY + '.\n\n' +
+    'CRITICAL: Write ALL content values in ' + LANG_PROMPTS[lang] + '. Only JSON keys stay in English.\n\n' +
+    'Return ONLY a valid JSON object — no markdown, no backticks:\n' +
+    '{\n' +
+    '  "news": {\n' +
+    '    "emoji": "one emoji",\n' +
+    '    "title": "biggest AI story today in one punchy line",\n' +
+    '    "summary": "1-2 sentence simple overview",\n' +
+    '    "full": "4-5 sentences with full context, background, and why it matters for regular people",\n' +
+    '    "points": ["key point 1", "key point 2", "key point 3"],\n' +
+    '    "searchTerm": "english search query to learn more about this story"\n' +
+    '  },\n' +
+    '  "tool": {\n' +
+    '    "emoji": "one emoji",\n' +
+    '    "title": "AI Tool name",\n' +
+    '    "summary": "1 sentence — what this tool does",\n' +
+    '    "full": "Full description of the tool with 3-4 specific use cases for someone in India",\n' +
+    '    "points": ["use case 1", "use case 2", "use case 3"],\n' +
+    '    "toolName": "exact tool name in English",\n' +
+    '    "toolUrl": "actual website URL of this tool",\n' +
+    '    "pricing": "Free / Freemium / Paid"\n' +
+    '  },\n' +
+    '  "learn": {\n' +
+    '    "emoji": "one emoji",\n' +
+    '    "title": "AI concept name",\n' +
+    '    "summary": "1 sentence simple definition",\n' +
+    '    "full": "Full explanation with a real-life analogy, how it works, and why it matters",\n' +
+    '    "points": ["fact 1", "fact 2", "fact 3"],\n' +
+    '    "searchTerm": "english search query to learn more"\n' +
+    '  },\n' +
+    '  "tip": {\n' +
+    '    "emoji": "one emoji",\n' +
+    '    "title": "tip title",\n' +
+    '    "summary": "1 sentence overview of the tip",\n' +
+    '    "full": "Full explanation of the tip with context and why it works",\n' +
+    '    "tryPrompt": "An exact example prompt someone can copy and use in ChatGPT or Claude right now"\n' +
+    '  }\n' +
+    '}';
+
+  fetch(BACKEND_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: prompt })
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function(data) {
+    isLoading = false;
+    btn.disabled = false;
+    btn.innerText = '🔄 Refresh Pulse';
+    contentLoaded = true;
+
+    if (data.error) {
+      document.getElementById('content').innerHTML = '<div class="empty-state"><span class="big">⚠️</span><p>Error:</p><div class="debug-box">' + data.error + '</div></div>';
+      return;
+    }
+    var text = data.text || '';
+    if (!text) {
+      document.getElementById('content').innerHTML = '<div class="empty-state"><span class="big">⚠️</span><p>Empty response</p></div>';
+      return;
+    }
+    try {
+      var clean = text.replace(/```json|```/g, '').trim();
+      var d = JSON.parse(clean);
+      renderCards(d, lang);
+    } catch(e) {
+      document.getElementById('content').innerHTML = '<div class="empty-state"><span class="big">⚠️</span><p>Parse error:</p><div class="debug-box">' + text.substring(0,400) + '</div></div>';
+    }
+  })
+  .catch(function(e) {
+    isLoading = false;
+    btn.disabled = false;
+    btn.innerText = '⚡ Get Today\'s Pulse';
+    document.getElementById('content').innerHTML = '<div class="empty-state"><span class="big">📡</span><p>Connection failed:</p><div class="debug-box">' + e.message + '</div></div>';
+  });
+}
+
+function safe(str) {
+  if (!str) return '';
+  return String(str).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderPoints(points) {
+  if (!points || !points.length) return '';
+  var html = '<ul class="key-points">';
+  for (var i = 0; i < points.length; i++) {
+    html += '<li>' + safe(points[i]) + '</li>';
+  }
+  html += '</ul>';
+  return html;
+}
+
+function renderCards(d, lang) {
+  var n = (lang !== 'en') ? ' native' : '';
+  var html = '';
+
+  // NEWS CARD
+  var newsSearch = d.news.searchTerm ? 'https://www.google.com/search?q=' + encodeURIComponent(d.news.searchTerm) : '#';
+  html += '<div class="card news" onclick="toggleCard(this)">';
+  html += '<div class="card-header">';
+  html += '<span class="card-emoji">' + d.news.emoji + '</span>';
+  html += '<div class="card-header-text">';
+  html += '<div class="card-tag news">🔥 Today\'s Big Story</div>';
+  html += '<div class="card-title' + n + '">' + safe(d.news.title) + '</div>';
+  html += '<div class="card-summary' + n + '">' + safe(d.news.summary) + '</div>';
+  html += '<div class="tap-hint">👆 Tap to read more</div>';
+  html += '</div>';
+  html += '<div class="card-chevron">⌄</div>';
+  html += '</div>';
+  html += '<div class="card-expand"><div class="card-expand-inner">';
+  html += '<div class="expand-section"><div class="expand-label">Full Story</div><div class="expand-body' + n + '">' + safe(d.news.full) + '</div></div>';
+  html += '<div class="expand-section"><div class="expand-label">Key Takeaways</div>' + renderPoints(d.news.points) + '</div>';
+  html += '<div class="expand-section"><div class="expand-label">Learn More</div><div class="expand-links">';
+  html += '<a class="expand-link" href="' + newsSearch + '" target="_blank">🔍 Search this topic</a>';
+  html += '</div></div>';
+  html += '</div></div></div>';
+
+  html += '<div class="divider"><div class="divider-line"></div><div class="divider-txt">For You</div><div class="divider-line"></div></div>';
+
+  // TOOL CARD
+  var toolUrl = d.tool.toolUrl || '#';
+  html += '<div class="card tool" onclick="toggleCard(this)">';
+  html += '<div class="card-header">';
+  html += '<span class="card-emoji">' + d.tool.emoji + '</span>';
+  html += '<div class="card-header-text">';
+  html += '<div class="card-tag tool">🛠️ Tool of the Day</div>';
+  html += '<div class="card-title' + n + '">' + safe(d.tool.title) + '</div>';
+  html += '<div class="card-summary' + n + '">' + safe(d.tool.summary) + '</div>';
+  html += '<div class="tap-hint">👆 Tap for link & use cases</div>';
+  html += '</div>';
+  html += '<div class="card-chevron">⌄</div>';
+  html += '</div>';
+  html += '<div class="card-expand"><div class="card-expand-inner">';
+  html += '<div class="expand-section"><div class="expand-label">What You Can Do</div><div class="expand-body' + n + '">' + safe(d.tool.full) + '</div></div>';
+  html += '<div class="expand-section"><div class="expand-label">Use Cases</div>' + renderPoints(d.tool.points) + '</div>';
+  html += '<div class="expand-section"><div class="expand-label">Pricing: ' + safe(d.tool.pricing) + '</div></div>';
+  html += '<div class="expand-section"><div class="expand-label">Try It</div><div class="expand-links">';
+  html += '<a class="expand-link cyan" href="' + toolUrl + '" target="_blank">🚀 Open ' + safe(d.tool.toolName) + '</a>';
+  html += '</div></div>';
+  html += '</div></div></div>';
+
+  // LEARN CARD
+  var learnSearch = d.learn.searchTerm ? 'https://www.google.com/search?q=' + encodeURIComponent(d.learn.searchTerm) : '#';
+  html += '<div class="card learn" onclick="toggleCard(this)">';
+  html += '<div class="card-header">';
+  html += '<span class="card-emoji">' + d.learn.emoji + '</span>';
+  html += '<div class="card-header-text">';
+  html += '<div class="card-tag learn">📚 Learn in 2 Minutes</div>';
+  html += '<div class="card-title' + n + '">' + safe(d.learn.title) + '</div>';
+  html += '<div class="card-summary' + n + '">' + safe(d.learn.summary) + '</div>';
+  html += '<div class="tap-hint">👆 Tap to go deeper</div>';
+  html += '</div>';
+  html += '<div class="card-chevron">⌄</div>';
+  html += '</div>';
+  html += '<div class="card-expand"><div class="card-expand-inner">';
+  html += '<div class="expand-section"><div class="expand-label">Full Explanation</div><div class="expand-body' + n + '">' + safe(d.learn.full) + '</div></div>';
+  html += '<div class="expand-section"><div class="expand-label">Key Facts</div>' + renderPoints(d.learn.points) + '</div>';
+  html += '<div class="expand-section"><div class="expand-label">Explore Further</div><div class="expand-links">';
+  html += '<a class="expand-link gold" href="' + learnSearch + '" target="_blank">📖 Learn more</a>';
+  html += '<a class="expand-link gold" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(d.learn.searchTerm || d.learn.title) + '" target="_blank">▶️ Watch on YouTube</a>';
+  html += '</div></div>';
+  html += '</div></div></div>';
+
+  // TIP CARD
+  html += '<div class="card tip" onclick="toggleCard(this)">';
+  html += '<div class="card-header">';
+  html += '<span class="card-emoji">' + d.tip.emoji + '</span>';
+  html += '<div class="card-header-text">';
+  html += '<div class="card-tag tip">💡 Pro Tip</div>';
+  html += '<div class="card-title' + n + '">' + safe(d.tip.title) + '</div>';
+  html += '<div class="card-summary' + n + '">' + safe(d.tip.summary) + '</div>';
+  html += '<div class="tap-hint">👆 Tap for example prompt</div>';
+  html += '</div>';
+  html += '<div class="card-chevron">⌄</div>';
+  html += '</div>';
+  html += '<div class="card-expand"><div class="card-expand-inner">';
+  html += '<div class="expand-section"><div class="expand-label">Full Tip</div><div class="expand-body' + n + '">' + safe(d.tip.full) + '</div></div>';
+  if (d.tip.tryPrompt) {
+    html += '<div class="expand-section"><div class="expand-label">Try This Prompt Right Now</div>';
+    html += '<div class="try-box"><div class="try-box-label">📋 Copy & paste into ChatGPT or Claude</div>';
+    html += '<div class="try-box-prompt">' + safe(d.tip.tryPrompt) + '</div></div></div>';
+  }
+  html += '<div class="expand-section"><div class="expand-links">';
+  html += '<a class="expand-link green" href="https://chat.openai.com" target="_blank">💬 Try on ChatGPT</a>';
+  html += '<a class="expand-link green" href="https://claude.ai" target="_blank">🤖 Try on Claude</a>';
+  html += '</div></div>';
+  html += '</div></div></div>';
+
+  document.getElementById('content').innerHTML = html;
+}
+</script>
+</body>
+</html>
